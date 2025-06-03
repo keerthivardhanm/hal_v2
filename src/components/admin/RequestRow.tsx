@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { ApprovalRequest } from "@/types";
@@ -16,7 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { ThumbsUp, ThumbsDown, Eye, Sparkles, CheckCircle2, Hourglass, XCircle, CalendarDays, User, Mail, FileText } from "lucide-react";
+import { ThumbsUp, ThumbsDown, Eye, Sparkles, CheckCircle2, Hourglass, XCircle, CalendarDays, User, Mail, FileText, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { useState, type ReactNode } from "react";
 import { doc, updateDoc, arrayUnion, serverTimestamp, getDoc } from "firebase/firestore";
@@ -24,6 +25,7 @@ import { db, auth } from "@/config/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { suggestDocumentContent, type SuggestDocumentContentInput } from "@/ai/flows/suggest-document-content"; // AI Flow
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
 
 interface RequestRowProps {
   request: ApprovalRequest;
@@ -43,13 +45,13 @@ const StatusInfo = ({ status }: { status: ApprovalRequest["status"] }) => {
     case "Level 1 Approved":
     case "Level 2 Approved":
       icon = <ThumbsUp className="h-4 w-4" />;
-      badgeVariant = "default"; // Using primary color for in-progress
+      badgeVariant = "default"; 
       textColor = "text-primary";
       break;
     case "Fully Approved":
       icon = <CheckCircle2 className="h-4 w-4" />;
-      badgeVariant = "default"; // Using accent for success, defined in globals.css as subtle green
-      textColor = "text-green-600 dark:text-green-400"; // Overriding for better visibility if accent is too light
+      badgeVariant = "default"; 
+      textColor = "text-green-600 dark:text-green-400"; 
       break;
     case "Rejected":
       icon = <XCircle className="h-4 w-4" />;
@@ -76,6 +78,7 @@ export function RequestRow({ request }: RequestRowProps) {
   const [rejectionReason, setRejectionReason] = useState("");
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
   const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
+  const [aiSuggestionError, setAiSuggestionError] = useState<string | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [isAiDialogOpen, setIsAiDialogOpen] = useState(false);
 
@@ -109,7 +112,7 @@ export function RequestRow({ request }: RequestRowProps) {
       if (newApproval.level === 1) newStatus = "Level 1 Approved";
       else if (newApproval.level === 2) newStatus = "Level 2 Approved";
       else if (newApproval.level >= 3) newStatus = "Fully Approved";
-      // In a real scenario, for level 3, you'd trigger the email.
+      
 
       await updateDoc(requestRef, {
         approvals: arrayUnion(newApproval),
@@ -144,8 +147,6 @@ export function RequestRow({ request }: RequestRowProps) {
         status: "Rejected",
         isRejected: true,
         rejectionReason: rejectionReason,
-        // Optionally, clear approvals if company policy dictates
-        // approvals: [] 
       });
       toast({ title: "Request Rejected", description: "The request has been marked as rejected." });
       setIsRejectDialogOpen(false);
@@ -159,14 +160,17 @@ export function RequestRow({ request }: RequestRowProps) {
 
   const handleAiSuggest = async () => {
     setIsAiLoading(true);
-    setAiSuggestion(null); // Clear previous suggestion
+    setAiSuggestion(null); 
+    setAiSuggestionError(null);
+    setIsAiDialogOpen(true); // Open dialog immediately
     try {
-      // Fetch latest request data to ensure formData is up-to-date for AI
       const requestRef = doc(db, "approval_requests", request.id);
       const docSnap = await getDoc(requestRef);
       if (!docSnap.exists()) {
-        toast({ variant: "destructive", title: "Error", description: "Request data not found." });
-        setIsAiLoading(false);
+        const errorMsg = "Request data not found.";
+        setAiSuggestionError(errorMsg);
+        toast({ variant: "destructive", title: "Error", description: errorMsg });
+        setIsAiLoading(false); // Stop loading in dialog
         return;
       }
       const currentRequestData = docSnap.data() as ApprovalRequest;
@@ -175,17 +179,17 @@ export function RequestRow({ request }: RequestRowProps) {
         submitterName: currentRequestData.submitterName,
         submitterEmail: currentRequestData.submitterEmail,
         requestDetails: currentRequestData.requestDetails,
-        // Add any other relevant fields from your form that the AI should consider
       };
 
       const result = await suggestDocumentContent({ formData: formDataForAI });
       setAiSuggestion(result.documentContentSuggestion);
-      setIsAiDialogOpen(true); // Open dialog once suggestion is ready
     } catch (error: any) {
       console.error("AI Suggestion Error:", error);
-      toast({ variant: "destructive", title: "AI Suggestion Failed", description: error.message || "Could not generate suggestion." });
+      const errorMsg = error.message || "Could not generate suggestion.";
+      setAiSuggestionError(errorMsg);
+      toast({ variant: "destructive", title: "AI Suggestion Failed", description: errorMsg });
     } finally {
-      setIsAiLoading(false);
+      setIsAiLoading(false); // Stop loading in dialog
     }
   };
   
@@ -249,27 +253,37 @@ export function RequestRow({ request }: RequestRowProps) {
           </DialogContent>
         </Dialog>
 
-        <Button variant="ghost" size="icon" title="AI Suggest Content" onClick={handleAiSuggest} disabled={isAiLoading}>
-          {isAiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-        </Button>
-        
         <Dialog open={isAiDialogOpen} onOpenChange={setIsAiDialogOpen}>
-            <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                    <DialogTitle className="font-headline flex items-center"><Sparkles className="h-5 w-5 mr-2 text-primary" />AI Document Suggestion</DialogTitle>
-                    <DialogDescription>
-                        Here's an AI-generated suggestion based on the request details. Use this as inspiration.
-                    </DialogDescription>
-                </DialogHeader>
-                {aiSuggestion ? (
-                    <Textarea readOnly value={aiSuggestion} rows={10} className="my-4" />
-                ) : (
-                    <p className="my-4 text-muted-foreground">No suggestion available or still loading...</p>
-                )}
-                <DialogFooter>
-                    <Button type="button" variant="secondary" onClick={() => setIsAiDialogOpen(false)}>Close</Button>
-                </DialogFooter>
-            </DialogContent>
+          <DialogTrigger asChild>
+            <Button variant="ghost" size="icon" title="AI Suggest Content" onClick={handleAiSuggest} disabled={isAiLoading && isAiDialogOpen}>
+              {(isAiLoading && isAiDialogOpen) ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                  <DialogTitle className="font-headline flex items-center"><Sparkles className="h-5 w-5 mr-2 text-primary" />AI Document Suggestion</DialogTitle>
+                  <DialogDescription>
+                      {isAiLoading ? "Generating suggestion..." : "Here's an AI-generated suggestion based on the request details. Use this as inspiration."}
+                  </DialogDescription>
+              </DialogHeader>
+              {isAiLoading ? (
+                <div className="flex items-center justify-center h-32">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : aiSuggestionError ? (
+                <Alert variant="destructive" className="my-4">
+                  <XCircle className="h-4 w-4" />
+                  <AlertDescription>{aiSuggestionError}</AlertDescription>
+                </Alert>
+              ): aiSuggestion ? (
+                  <Textarea readOnly value={aiSuggestion} rows={10} className="my-4" />
+              ) : (
+                  <p className="my-4 text-muted-foreground">No suggestion available or an error occurred.</p>
+              )}
+              <DialogFooter>
+                  <Button type="button" variant="secondary" onClick={() => setIsAiDialogOpen(false)}>Close</Button>
+              </DialogFooter>
+          </DialogContent>
         </Dialog>
 
 

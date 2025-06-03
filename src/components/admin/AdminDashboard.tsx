@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -15,10 +16,12 @@ import {
 import { RequestRow } from "./RequestRow";
 import { Loader2, Inbox } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 
 export function AdminDashboard() {
   const [requests, setRequests] = useState<ApprovalRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     setLoading(true);
@@ -33,12 +36,16 @@ export function AdminDashboard() {
       setLoading(false);
     }, (error) => {
       console.error("Error fetching requests: ", error);
-      // TODO: Show toast error
+      toast({
+        variant: "destructive",
+        title: "Failed to Fetch Requests",
+        description: error.message || "An unexpected error occurred while fetching approval requests.",
+      });
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [toast]);
 
   if (loading) {
     return (
