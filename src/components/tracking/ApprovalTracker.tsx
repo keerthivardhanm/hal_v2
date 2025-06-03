@@ -66,7 +66,7 @@ export function ApprovalTracker({ request }: ApprovalTrackerProps) {
       const timer = setTimeout(() => {
         window.print();
         setIsPrinting(false); 
-      }, 100); 
+      }, 250); // Increased delay
       return () => {
         clearTimeout(timer);
       }

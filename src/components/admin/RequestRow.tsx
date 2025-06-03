@@ -90,7 +90,7 @@ export function RequestRow({ request }: RequestRowProps) {
       const timer = setTimeout(() => {
         window.print();
         setIsPrinting(false);
-      }, 100);
+      }, 250); // Increased delay
       return () => {
         clearTimeout(timer);
       }
@@ -131,7 +131,7 @@ export function RequestRow({ request }: RequestRowProps) {
       const newApproval = {
         adminUid: currentUser.uid,
         adminEmail: currentUser.email || "N/A",
-        approvedAt: Timestamp.now(), // Using client-side timestamp
+        approvedAt: Timestamp.now(), 
         level: newApprovalLevel,
       };
 
