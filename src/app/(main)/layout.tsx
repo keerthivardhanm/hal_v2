@@ -1,9 +1,10 @@
+
 import type { ReactNode } from "react";
 import { MainNavbar } from "@/components/layout/MainNavbar";
 
 export default function MainLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col main-app-content"> {/* Added main-app-content class */}
       <MainNavbar />
       <main className="flex-1">{children}</main>
       <footer className="py-6 md:px-8 md:py-0 bg-background border-t">

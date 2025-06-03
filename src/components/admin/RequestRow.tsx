@@ -19,12 +19,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ThumbsUp, ThumbsDown, Eye, CheckCircle2, Hourglass, XCircle, CalendarDays, User, Mail, FileText, Loader2, Building, Hash, Clock, List, Package, Printer } from "lucide-react";
 import { format } from "date-fns";
-import { useState, type ReactNode } from "react";
-import { doc, updateDoc, arrayUnion, serverTimestamp, Timestamp } from "firebase/firestore"; // Added Timestamp
+import { useState, type ReactNode, useEffect } from "react"; // Added useEffect
+import { doc, updateDoc, arrayUnion, Timestamp } from "firebase/firestore"; 
 import { db, auth } from "@/config/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
+import { ApprovalLetter } from "@/components/print/ApprovalLetter"; // Added ApprovalLetter import
 
 interface RequestRowProps {
   request: ApprovalRequest;
@@ -80,8 +81,39 @@ export function RequestRow({ request }: RequestRowProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false); // State for printing
 
   const currentUser = auth.currentUser;
+
+  useEffect(() => {
+    if (isPrinting) {
+      const adminContent = document.querySelector('.admin-app-content');
+      if (adminContent) adminContent.classList.add('no-print');
+      
+      const timer = setTimeout(() => {
+        window.print();
+        if (adminContent) adminContent.classList.remove('no-print');
+        setIsPrinting(false);
+      }, 100);
+      return () => {
+        clearTimeout(timer);
+        if (adminContent) adminContent.classList.remove('no-print');
+      }
+    }
+  }, [isPrinting]);
+
+  const handleTriggerPrint = () => {
+     if (request.status === "Fully Approved") {
+      setIsPrinting(true);
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Cannot Print",
+        description: "The approval letter can only be printed once the request is fully approved.",
+      });
+    }
+  };
+
 
   const handleApprove = async () => {
     if (!currentUser) {
@@ -104,7 +136,7 @@ export function RequestRow({ request }: RequestRowProps) {
       const newApproval = {
         adminUid: currentUser.uid,
         adminEmail: currentUser.email || "N/A",
-        approvedAt: Timestamp.now(), // Changed from serverTimestamp()
+        approvedAt: Timestamp.now(),
         level: newApprovalLevel,
       };
 
@@ -148,8 +180,6 @@ export function RequestRow({ request }: RequestRowProps) {
         status: "Rejected",
         isRejected: true,
         rejectionReason: rejectionReason,
-        // Optionally add a server timestamp for rejection time if needed, for example:
-        // rejectedAt: serverTimestamp(), 
       });
       toast({ title: "Request Rejected", description: "The request has been marked as rejected." });
       setIsRejectDialogOpen(false);
@@ -165,6 +195,9 @@ export function RequestRow({ request }: RequestRowProps) {
   const canApprove = request.status !== "Fully Approved" && request.status !== "Rejected" && !request.approvals.find(appr => appr.adminUid === currentUser?.uid) && request.approvals.length < 3;
   const canReject = request.status !== "Fully Approved" && request.status !== "Rejected";
 
+  if (isPrinting) {
+    return <ApprovalLetter request={request} />;
+  }
 
   return (
     <TableRow>
@@ -283,7 +316,7 @@ export function RequestRow({ request }: RequestRowProps) {
             </Dialog>
         )}
          {request.status === "Fully Approved" && (
-            <Button variant="outline" size="icon" title="Print PDF" onClick={() => window.print()} className="ml-1">
+            <Button variant="outline" size="icon" title="Print PDF" onClick={handleTriggerPrint} className="ml-1">
                 <Printer className="h-4 w-4" />
             </Button>
         )}
