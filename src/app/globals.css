@@ -112,10 +112,15 @@ body {
     color: black !important;
     background-color: transparent !important; /* Children backgrounds should be transparent */
     box-shadow: none !important;
-    border-style: solid !important; /* Ensure borders are solid if they exist */
-    border-color: black !important; /* Ensure borders are black */
+    /* Ensure borders are solid if they exist in the letter, but override to black for print */
+    /* Use cautiously, may override intentional borders in ApprovalLetter */
+    /* border-style: solid !important;  */
+    /* border-color: black !important; */
+    transform: none !important; /* Reset any transforms that might affect print */
+    filter: none !important; /* Reset any filters */
   }
 
+  /* Ensure the printable area itself is styled for printing */
   .printable-area {
     position: absolute !important;
     left: 0 !important;
@@ -126,14 +131,15 @@ body {
     padding: 0 !important; /* Margins/padding for letter content are inside ApprovalLetter */
     background: white !important; /* Ensure printable area itself has white background */
     font-size: 11pt; /* Adjust base font size for print if needed */
+    border: none !important; /* Remove any border on the container itself */
   }
   
-  /* Explicitly hide known app shell components by display:none as a fallback */
-  .main-app-content:not(:has(> .printable-area)),
-  .admin-app-content:not(:has(> .printable-area)),
+  /* Explicitly hide known app shell components and overlays */
   header, footer, nav, aside, .no-print,
-  body > div[id^="radix-"], body > div[data-radix-portal] {
-    display: none !important;
+  [data-radix-overlay] /* Hide dialog overlays specifically */
+  /* Do NOT hide [data-radix-portal] or [role="dialog"] here, as .printable-area is inside it */
+   {
+    display: none !important; /* Use display:none for things that should not occupy space */
   }
 
 
@@ -142,3 +148,5 @@ body {
     margin: 20mm; /* Standard A4 margins */
   }
 }
+
+    
