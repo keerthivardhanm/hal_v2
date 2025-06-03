@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -29,10 +30,10 @@ export function AdminNavbar() {
            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" className="h-6 w-6 text-primary"><rect width="256" height="256" fill="none"></rect><path d="M208,80H168a8,8,0,0,0-8,8v80a8,8,0,0,0,8,8h40a8,8,0,0,0,8-8V88A8,8,0,0,0,208,80ZM48,80H88a8,8,0,0,1,8,8v80a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V88A8,8,0,0,1,48,80ZM160,96V88H48v8Zm48,0V88H104v8Zm0,16H104v8h96Zm-48,0H48v8h56Zm48,16H104v8h96Zm-48,0H48v8h56Zm48,16H104v8h96Zm-48,0H48v8h56Zm40,32H168V88h.8L152,128l-16.8-40H160V72a16,16,0,0,0-16-16H48A16,16,0,0,0,32,72v96a16,16,0,0,0,16,16h72a16,16,0,0,0,13.1-6.8l12.8-20.1,12.8,20.1A16,16,0,0,0,168,184h40a16,16,0,0,0,16-16V88A16,16,0,0,0,208,72H160" fill="currentColor"></path></svg>
           <span className="font-bold sm:inline-block font-headline text-xl">ApprovalFlow - Admin</span>
         </Link>
-        <nav className="flex items-center space-x-6 text-sm font-medium">
+        <nav className="flex items-center space-x-1 text-sm font-medium">
           <Link
             href="/admin/dashboard"
-            className="transition-colors duration-200 ease-in-out hover:text-primary text-foreground/70 flex items-center"
+            className="px-3 py-2 transition-colors duration-200 ease-in-out hover:bg-muted hover:text-primary text-foreground/70 flex items-center rounded-md"
           >
             <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
           </Link>
@@ -43,7 +44,7 @@ export function AdminNavbar() {
               Welcome, {user.email}
             </span>
           )}
-          <Button variant="outline" onClick={handleSignOut} className="transition-colors duration-200 ease-in-out">
+          <Button variant="outline" onClick={handleSignOut} className="transition-colors duration-200 ease-in-out hover:bg-muted">
             <LogOut className="mr-2 h-4 w-4" /> Sign Out
           </Button>
         </div>

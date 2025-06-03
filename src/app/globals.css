@@ -99,7 +99,7 @@ body {
 @media print {
   html, body {
     width: 100%;
-    height: auto !important; /* Allow content to define height */
+    height: auto !important;
     background: white !important;
     color: black !important;
     margin: 0 !important;
@@ -108,79 +108,84 @@ body {
     print-color-adjust: exact !important;
   }
 
-  /* Hide all direct children of body initially */
+  /* Hide everything on the page by default for printing */
   body > * {
-    display: none !important;
-  }
-  
-  /* Make Radix UI Dialog Portals visible */
-  body > div[data-radix-portal],
-  body > div[data-radix-dialog-portal] {
-    display: block !important;
-    visibility: visible !important; /* Ensure the portal itself is visible */
-  }
-
-  /* Within the portal, hide everything except the DialogContent (role="dialog") */
-  body > div[data-radix-portal] > *,
-  body > div[data-radix-dialog-portal] > * {
-    display: none !important;
-  }
-
-  /* Make the DialogContent visible and style it for printing */
-  body > div[data-radix-portal] > div[role="dialog"][data-state="open"],
-  body > div[data-radix-dialog-portal] > div[role="dialog"][data-state="open"] {
-    display: block !important; 
-    visibility: visible !important;
-    position: static !important; /* Override fixed positioning for print */
-    width: 100% !important;
-    height: auto !important;
-    box-shadow: none !important;
-    border: none !important;
-    background: white !important;
-    overflow: visible !important; /* Allow content to flow */
-    padding: 0 !important; /* Reset padding, rely on @page or .printable-area */
-  }
-  
-  /* Style the .printable-area within the DialogContent for printing */
-  .printable-area {
-    display: block !important;
-    visibility: visible !important;
-    position: relative !important; /* Or static, but relative is fine here */
-    width: 100% !important;
-    height: auto !important;
-    margin: 0 !important;
-    padding: 0 !important; /* Margins/padding for letter content are inside ApprovalLetter or @page */
-    background: white !important;
-    font-size: 11pt; /* Adjust base font size for print if needed */
-    border: none !important; /* Remove any border on the container itself */
-    font-family: serif; /* Ensure serif font for print if desired */
-  }
-
-  .printable-area * {
-    visibility: visible !important;
-    color: black !important;
-    background-color: transparent !important;
-    box-shadow: none !important;
-    transform: none !important;
-    filter: none !important;
-    font-family: serif; /* Ensure serif font for print if desired */
-  }
-  
-  /* Hide known app shell components, overlays, and other non-print elements */
-  header, footer, nav, aside, .no-print,
-  [data-radix-overlay], /* Specifically hide Dialog overlay */
-  button:not(.printable-area button), /* Hide all buttons unless they are part of .printable-area and specifically styled for print */
-  input:not(.printable-area input),
-  textarea:not(.printable-area textarea)
-   {
     display: none !important;
     visibility: hidden !important;
   }
 
+  /* Make the Radix UI Dialog Portal itself visible */
+  body > div[data-radix-dialog-portal] {
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  /* Inside the portal, hide everything except the actual DialogContent */
+  body > div[data-radix-dialog-portal] > * {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* Make the DialogContent visible and style it for printing */
+  body > div[data-radix-dialog-portal] > div[role="dialog"][data-state="open"] {
+    display: block !important;
+    visibility: visible !important;
+    position: static !important; /* Crucial: Override fixed/absolute positioning */
+    width: 100% !important;
+    height: auto !important;
+    max-width: none !important; /* Override screen max-width */
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: white !important;
+    overflow: visible !important; /* Ensure content isn't clipped */
+    font-size: 11pt;
+    font-family: serif;
+  }
+
+  /* Style the .printable-area within the DialogContent for printing */
+  /* This is the direct wrapper of ApprovalLetter */
+  .printable-area {
+    display: block !important;
+    visibility: visible !important;
+    background: white !important; /* Ensure white background for the letter area */
+    color: black !important; /* Ensure black text for the letter area */
+    padding: 0 !important; /* Margins/padding are handled by @page or letter's internal padding */
+    margin: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    font-family: serif; /* Ensure serif font for print if desired */
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Force all children of .printable-area to be visible and correctly styled */
+  .printable-area *, .printable-area *:before, .printable-area *:after {
+    visibility: visible !important;
+    color: black !important;
+    background-color: transparent !important; /* Avoid inherited backgrounds */
+    box-shadow: none !important;
+    text-shadow: none !important;
+    border-color: black !important; /* Make borders black if any */
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    font-family: serif !important; /* Force serif for all text within */
+  }
+  
+  /* Explicitly hide known non-print elements, including dialog overlays */
+  header, footer, nav, aside, .no-print,
+  [data-radix-overlay], /* Radix Dialog Overlay */
+  div[data-radix-focus-guard], /* Radix Focus Guards */
+  button:not(.printable-area button), /* Hide buttons not in printable area */
+  input:not(.printable-area input),
+  textarea:not(.printable-area textarea) {
+    display: none !important;
+    visibility: hidden !important;
+  }
 
   @page {
     size: A4;
     margin: 20mm; /* Standard A4 margins */
   }
 }
-    

@@ -15,14 +15,14 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea"; // Keep for purpose if it's long
+import { Textarea } from "@/components/ui/textarea"; 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { collection, addDoc, serverTimestamp, Timestamp as FirestoreTimestamp } from "firebase/firestore";
 import { db } from "@/config/firebase";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import type { ApprovalRequest } from "@/types";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Loader2, Send, CalendarIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -34,6 +34,9 @@ const GADGET_OPTIONS = [
   { id: "mobile", label: "Mobile" },
   { id: "laptop", label: "Laptop" },
   { id: "pendrive", label: "Pendrive" },
+  { id: "tablet", label: "Tablet" },
+  { id: "smartwatch", label: "Smartwatch" },
+  { id: "camera", label: "Camera" },
 ] as const;
 
 const formSchema = z.object({
@@ -49,10 +52,13 @@ const formSchema = z.object({
     mobile: z.boolean().optional(),
     laptop: z.boolean().optional(),
     pendrive: z.boolean().optional(),
+    tablet: z.boolean().optional(),
+    smartwatch: z.boolean().optional(),
+    camera: z.boolean().optional(),
     others: z.boolean().optional(),
-  }).refine(value => value.mobile || value.laptop || value.pendrive || value.others, {
+  }).refine(value => value.mobile || value.laptop || value.pendrive || value.tablet || value.smartwatch || value.camera || value.others, {
     message: "You must select at least one gadget type.",
-    path: ["mobile"], // Path to show error under the first checkbox or a general field
+    path: ["mobile"], 
   }),
   otherGadgetName: z.string().optional(),
 }).refine(data => {
@@ -81,12 +87,12 @@ export function SubmissionForm() {
       requestDate: new Date(),
       requestTime: "09:00",
       numberOfItems: 1,
-      gadgets: { mobile: false, laptop: false, pendrive: false, others: false },
+      gadgets: { mobile: false, laptop: false, pendrive: false, tablet: false, smartwatch: false, camera: false, others: false },
       otherGadgetName: "",
     },
   });
 
-  const watchGadgets = form.watch("gadgets.others");
+  const watchGadgetsOthers = form.watch("gadgets.others");
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
@@ -95,6 +101,9 @@ export function SubmissionForm() {
     if (values.gadgets.mobile) finalSelectedGadgets.push("Mobile");
     if (values.gadgets.laptop) finalSelectedGadgets.push("Laptop");
     if (values.gadgets.pendrive) finalSelectedGadgets.push("Pendrive");
+    if (values.gadgets.tablet) finalSelectedGadgets.push("Tablet");
+    if (values.gadgets.smartwatch) finalSelectedGadgets.push("Smartwatch");
+    if (values.gadgets.camera) finalSelectedGadgets.push("Camera");
     if (values.gadgets.others && values.otherGadgetName) {
       finalSelectedGadgets.push(values.otherGadgetName.trim());
     }
@@ -133,7 +142,7 @@ export function SubmissionForm() {
   }
 
   return (
-    <Card className="w-full max-w-2xl mx-auto shadow-xl">
+    <Card className="w-full max-w-2xl mx-auto shadow-xl transition-shadow hover:shadow-2xl">
       <CardHeader>
         <CardTitle className="text-2xl font-headline flex items-center">
           <Send className="mr-2 h-6 w-6 text-primary" /> Submit New Approval Request
@@ -285,14 +294,14 @@ export function SubmissionForm() {
 
             <FormItem>
               <FormLabel>Choose Gadget(s)</FormLabel>
-              <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                 {GADGET_OPTIONS.map((option) => (
                   <FormField
                     key={option.id}
                     control={form.control}
                     name={`gadgets.${option.id}` as const}
                     render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormItem className="flex flex-row items-center space-x-3 space-y-0">
                         <FormControl>
                           <Checkbox
                             checked={field.value}
@@ -310,7 +319,7 @@ export function SubmissionForm() {
                   control={form.control}
                   name="gadgets.others"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormItem className="flex flex-row items-center space-x-3 space-y-0">
                       <FormControl>
                         <Checkbox
                           checked={field.value}
@@ -324,10 +333,10 @@ export function SubmissionForm() {
                   )}
                 />
               </div>
-              <FormMessage>{form.formState.errors.gadgets?.message}</FormMessage> {/* For the refine error on the object */}
+              <FormMessage>{form.formState.errors.gadgets?.message}</FormMessage>
             </FormItem>
 
-            {watchGadgets && (
+            {watchGadgetsOthers && (
               <FormField
                 control={form.control}
                 name="otherGadgetName"
@@ -343,7 +352,7 @@ export function SubmissionForm() {
               />
             )}
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full transition-transform hover:scale-[1.02]" disabled={isLoading}>
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
               Submit Request
             </Button>

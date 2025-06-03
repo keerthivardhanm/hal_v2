@@ -19,7 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ThumbsUp, ThumbsDown, Eye, CheckCircle2, Hourglass, XCircle, CalendarDays, User, Mail, FileText, Loader2, Building, Hash, Clock, List, Package, Printer } from "lucide-react";
 import { format } from "date-fns";
-import { useState, type ReactNode, useEffect } from "react";
+import { useState, type ReactNode } from "react";
 import { doc, updateDoc, arrayUnion, Timestamp } from "firebase/firestore"; 
 import { db, auth } from "@/config/firebase";
 import { useToast } from "@/hooks/use-toast";
@@ -167,10 +167,9 @@ export function RequestRow({ request }: RequestRowProps) {
     if (letterPreviewElement) {
       letterPreviewElement.classList.add('printable-area');
       window.print();
-      // Delay removal to ensure print dialog has processed
       setTimeout(() => {
         letterPreviewElement.classList.remove('printable-area');
-      }, 500);
+      }, 250); // Increased delay
     } else {
        toast({ variant: "destructive", title: "Preview Error", description: "Could not find letter content to print." });
     }
@@ -181,7 +180,7 @@ export function RequestRow({ request }: RequestRowProps) {
 
 
   return (
-    <TableRow>
+    <TableRow className="transition-colors hover:bg-muted/80">
       <TableCell className="font-medium hidden md:table-cell">{request.id.substring(0, 8)}...</TableCell>
       <TableCell>{request.submitterName}</TableCell>
       <TableCell className="hidden sm:table-cell">{request.submitterEmail}</TableCell>
@@ -192,7 +191,7 @@ export function RequestRow({ request }: RequestRowProps) {
       <TableCell className="text-right space-x-1">
         <Dialog>
           <DialogTrigger asChild>
-            <Button variant="ghost" size="icon" title="View Details">
+            <Button variant="ghost" size="icon" title="View Details" className="transition-transform hover:scale-110">
               <Eye className="h-4 w-4" />
             </Button>
           </DialogTrigger>
@@ -253,7 +252,7 @@ export function RequestRow({ request }: RequestRowProps) {
         </Dialog>
 
         {canApprove && (
-            <Button variant="ghost" size="icon" title="Approve" onClick={handleApprove} disabled={isSubmitting}>
+            <Button variant="ghost" size="icon" title="Approve" onClick={handleApprove} disabled={isSubmitting} className="transition-transform hover:scale-110">
               {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin text-green-500" /> : <ThumbsUp className="h-4 w-4 text-green-500" />}
             </Button>
         )}
@@ -261,7 +260,7 @@ export function RequestRow({ request }: RequestRowProps) {
         {canReject && (
             <Dialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
             <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" title="Reject">
+                <Button variant="ghost" size="icon" title="Reject" className="transition-transform hover:scale-110">
                 <ThumbsDown className="h-4 w-4 text-red-500" />
                 </Button>
             </DialogTrigger>
@@ -301,7 +300,7 @@ export function RequestRow({ request }: RequestRowProps) {
          {request.status === "Fully Approved" && (
             <Dialog open={showLetterPreviewDialog} onOpenChange={setShowLetterPreviewDialog}>
               <DialogTrigger asChild>
-                <Button variant="outline" size="icon" title="Preview & Print Approval Letter" className="ml-1" onClick={() => setShowLetterPreviewDialog(true)}>
+                <Button variant="outline" size="icon" title="Preview & Print Approval Letter" className="ml-1 transition-transform hover:scale-110" onClick={() => setShowLetterPreviewDialog(true)}>
                     <Printer className="h-4 w-4" />
                 </Button>
               </DialogTrigger>

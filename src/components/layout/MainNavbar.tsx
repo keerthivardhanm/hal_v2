@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -35,12 +36,12 @@ export function MainNavbar() {
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" className="h-6 w-6 text-primary"><rect width="256" height="256" fill="none"></rect><path d="M M208,80H168a8,8,0,0,0-8,8v80a8,8,0,0,0,8,8h40a8,8,0,0,0,8-8V88A8,8,0,0,0,208,80ZM48,80H88a8,8,0,0,1,8,8v80a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V88A8,8,0,0,1,48,80ZM160,96V88H48v8Zm48,0V88H104v8Zm0,16H104v8h96Zm-48,0H48v8h56Zm48,16H104v8h96Zm-48,0H48v8h56Zm48,16H104v8h96Zm-48,0H48v8h56Zm40,32H168V88h.8L152,128l-16.8-40H160V72a16,16,0,0,0-16-16H48A16,16,0,0,0,32,72v96a16,16,0,0,0,16,16h72a16,16,0,0,0,13.1-6.8l12.8-20.1,12.8,20.1A16,16,0,0,0,168,184h40a16,16,0,0,0,16-16V88A16,16,0,0,0,208,72H160" fill="currentColor"></path></svg>
           <span className="font-bold sm:inline-block font-headline text-xl">ApprovalFlow</span>
         </Link>
-        <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
+        <nav className="hidden md:flex items-center space-x-1">
           {navLinks.map(link => (
             <Link
               key={link.href}
               href={link.href}
-              className="transition-colors duration-200 ease-in-out hover:text-primary text-foreground/70"
+              className="px-3 py-2 transition-colors duration-200 ease-in-out hover:bg-muted hover:text-primary text-foreground/70 rounded-md text-sm font-medium"
             >
               {link.icon ? <span className="flex items-center">{link.icon}{link.label}</span> : link.label}
             </Link>
@@ -49,7 +50,7 @@ export function MainNavbar() {
         <div className="flex flex-1 items-center justify-end space-x-4">
           {user ? (
             <>
-              <Button variant="ghost" onClick={() => router.push("/admin/dashboard")} className="transition-colors duration-200 ease-in-out hover:text-primary">Admin Dashboard</Button>
+              <Button variant="ghost" onClick={() => router.push("/admin/dashboard")} className="transition-colors duration-200 ease-in-out hover:text-primary hover:bg-muted">Admin Dashboard</Button>
               <Button variant="outline" onClick={handleSignOut} className="transition-colors duration-200 ease-in-out">Sign Out</Button>
             </>
           ) : (
@@ -71,12 +72,12 @@ export function MainNavbar() {
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" className="mr-2 h-6 w-6 text-primary"><rect width="256" height="256" fill="none"></rect><path d="M208,80H168a8,8,0,0,0-8,8v80a8,8,0,0,0,8,8h40a8,8,0,0,0,8-8V88A8,8,0,0,0,208,80ZM48,80H88a8,8,0,0,1,8,8v80a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V88A8,8,0,0,1,48,80ZM160,96V88H48v8Zm48,0V88H104v8Zm0,16H104v8h96Zm-48,0H48v8h56Zm48,16H104v8h96Zm-48,0H48v8h56Zm48,16H104v8h96Zm-48,0H48v8h56Zm40,32H168V88h.8L152,128l-16.8-40H160V72a16,16,0,0,0-16-16H48A16,16,0,0,0,32,72v96a16,16,0,0,0,16,16h72a16,16,0,0,0,13.1-6.8l12.8-20.1,12.8,20.1A16,16,0,0,0,168,184h40a16,16,0,0,0,16-16V88A16,16,0,0,0,208,72H160" fill="currentColor"></path></svg>
                 <span className="font-bold font-headline">ApprovalFlow</span>
               </Link>
-              <div className="flex flex-col space-y-3">
+              <div className="flex flex-col space-y-2">
                 {navLinks.map(link => (
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="transition-colors duration-200 ease-in-out hover:text-primary text-foreground/80 flex items-center"
+                    className="px-3 py-2 transition-colors duration-200 ease-in-out hover:bg-muted hover:text-primary text-foreground/80 flex items-center rounded-md"
                   >
                     {link.icon} {link.label}
                   </Link>

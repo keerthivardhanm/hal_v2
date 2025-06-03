@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -59,7 +60,7 @@ export function LoginForm() {
   }
 
   return (
-    <Card className="w-full max-w-md shadow-xl">
+    <Card className="w-full max-w-md shadow-xl transition-shadow duration-300 ease-in-out hover:shadow-2xl">
       <CardHeader>
         <CardTitle className="text-2xl font-headline">Admin Login</CardTitle>
         <CardDescription>Enter your credentials to access the admin dashboard.</CardDescription>
@@ -93,7 +94,7 @@ export function LoginForm() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full transition-transform hover:scale-[1.02]" disabled={isLoading}>
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Login
             </Button>
