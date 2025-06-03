@@ -20,25 +20,13 @@ export function ApprovalLetter({ request }: ApprovalLetterProps) {
 
   return (
     <div className="p-8 bg-white text-black font-serif text-xs print-letter-container">
+      {/* Styles specifically for this component when printed, ensuring it adheres to the A4 format */}
       <style jsx global>{`
         @media print {
-          body {
-            margin: 0;
-            padding: 0;
-            font-size: 10pt;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-          }
           .print-letter-container {
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            top: 0;
-            left: 0;
-            page-break-after: always;
-          }
-          .main-app-content {
-            display: none !important;
+            width: 210mm; /* A4 width */
+            height: 297mm; /* A4 height */
+            box-sizing: border-box; /* Include padding and border in the element's total width and height */
           }
         }
       `}</style>
@@ -98,7 +86,6 @@ export function ApprovalLetter({ request }: ApprovalLetterProps) {
                 <td colSpan={4} className="border border-black p-1 text-center">No gadgets specified.</td>
               </tr>
             )}
-             {/* Example static rows from image - adjust if dynamic data should cover this */}
             {request.finalSelectedGadgets.some(g => g.toLowerCase().includes("adaptor") || g.toLowerCase().includes("console cable")) && (
                  <tr>
                     <td className="border border-black p-1 text-center"></td>
@@ -125,15 +112,15 @@ export function ApprovalLetter({ request }: ApprovalLetterProps) {
 
       <footer className="flex justify-between items-end pt-10">
         <div className="text-center">
-          <p className="mb-2">({approver1?.adminEmail || "__________________"})</p>
+          <p className="mb-2">{approver1 ? "(Approved)" : "(__________________)"}</p>
           <p className="font-bold">GM ( O )</p>
         </div>
         <div className="text-center">
-          <p className="mb-2">({approver2?.adminEmail || "__________________"})</p>
+          <p className="mb-2">{approver2 ? "(Approved)" : "(__________________)"}</p>
           <p className="font-bold">DGM</p>
         </div>
         <div className="text-center">
-          <p className="mb-2">({approver3?.adminEmail || "__________________"})</p>
+          <p className="mb-2">{approver3 ? "(Approved)" : "(__________________)"}</p>
           <p className="font-bold">SM(IT)</p>
         </div>
       </footer>

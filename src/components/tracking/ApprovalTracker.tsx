@@ -9,9 +9,9 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CheckCircle2, Hourglass, Printer, User, Mail, FileText, CalendarDays, XCircle, ThumbsUp, Users, Building, Hash, Clock, List, Package } from "lucide-react";
 import { format } from 'date-fns';
-import { useToast } from "@/hooks/use-toast"; // Added useToast
-import { ApprovalLetter } from "@/components/print/ApprovalLetter"; // Added ApprovalLetter import
-import { useState, useEffect } from "react"; // Added useState, useEffect
+import { useToast } from "@/hooks/use-toast";
+import { ApprovalLetter } from "@/components/print/ApprovalLetter";
+import { useState, useEffect } from "react";
 
 interface ApprovalTrackerProps {
   request: ApprovalRequest;
@@ -63,17 +63,12 @@ export function ApprovalTracker({ request }: ApprovalTrackerProps) {
 
   useEffect(() => {
     if (isPrinting) {
-      const mainContent = document.querySelector('.main-app-content');
-      if (mainContent) mainContent.classList.add('no-print');
-      
       const timer = setTimeout(() => {
         window.print();
-        if (mainContent) mainContent.classList.remove('no-print');
         setIsPrinting(false); 
       }, 100); 
       return () => {
         clearTimeout(timer);
-        if (mainContent) mainContent.classList.remove('no-print');
       }
     }
   }, [isPrinting]);
@@ -91,11 +86,15 @@ export function ApprovalTracker({ request }: ApprovalTrackerProps) {
   };
   
   if (isPrinting) {
-    return <ApprovalLetter request={request} />;
+    return (
+      <div className="printable-area">
+        <ApprovalLetter request={request} />
+      </div>
+    );
   }
 
   return (
-    <div className="main-app-content"> {/* Added wrapper class for print hiding */}
+    <div className="main-app-content"> 
       <Card className="w-full max-w-3xl mx-auto shadow-xl">
         <CardHeader>
           <CardTitle className="text-2xl font-headline flex items-center">

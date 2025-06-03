@@ -92,24 +92,36 @@ body {
   body {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
-    background-color: white !important; /* Ensure print background is white */
-    color: black !important; /* Ensure print text is black */
+    background-color: white !important;
+    color: black !important;
   }
-  .no-print, .main-app-content > header, .main-app-content > footer, .admin-app-content > header, .admin-app-content > footer {
+
+  /* Hide everything by default */
+  body > *:not(.printable-area) {
     display: none !important;
   }
-  .printable-area { /* This class will wrap the ApprovalLetter component when printing */
+  
+  /* Specifically ensure layout elements are hidden if they are outside .printable-area */
+  .main-app-content > header, .main-app-content > footer,
+  .admin-app-content > header, .admin-app-content > footer,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Style the printable area to take up the whole page */
+  .printable-area {
     display: block !important;
-    position: fixed; /* Use fixed to take over viewport, or relative if parent is structured for it */
+    position: absolute; /* Changed from fixed to absolute for better flow with @page */
     top: 0;
     left: 0;
-    width: 100vw;
-    height: 100vh;
-    padding: 20px; /* Or use @page margins */
+    width: 100%; /* Or let @page define width */
     background-color: white;
+    padding: 0; /* Margins will be handled by @page */
+    margin: 0;
     z-index: 9999;
   }
-   @page {
+
+  @page {
     size: A4;
     margin: 20mm; /* Standard A4 margins */
   }
