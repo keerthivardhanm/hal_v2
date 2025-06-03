@@ -81,34 +81,9 @@ export function RequestRow({ request }: RequestRowProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
-  const [isPrinting, setIsPrinting] = useState(false);
+  const [showLetterPreviewDialog, setShowLetterPreviewDialog] = useState(false);
 
   const currentUser = auth.currentUser;
-
-  useEffect(() => {
-    if (isPrinting) {
-      const timer = setTimeout(() => {
-        window.print();
-        setIsPrinting(false);
-      }, 250); // Increased delay
-      return () => {
-        clearTimeout(timer);
-      }
-    }
-  }, [isPrinting]);
-
-  const handleTriggerPrint = () => {
-     if (request.status === "Fully Approved") {
-      setIsPrinting(true);
-    } else {
-      toast({
-        variant: "destructive",
-        title: "Cannot Print",
-        description: "The approval letter can only be printed once the request is fully approved.",
-      });
-    }
-  };
-
 
   const handleApprove = async () => {
     if (!currentUser) {
@@ -187,16 +162,23 @@ export function RequestRow({ request }: RequestRowProps) {
     }
   };
 
+  const handleDownloadPdfFromPreview = () => {
+    const letterPreviewElement = document.getElementById('approval-letter-in-dialog-admin');
+    if (letterPreviewElement) {
+      letterPreviewElement.classList.add('printable-area');
+      window.print();
+      // Delay removal to ensure print dialog has processed
+      setTimeout(() => {
+        letterPreviewElement.classList.remove('printable-area');
+      }, 500);
+    } else {
+       toast({ variant: "destructive", title: "Preview Error", description: "Could not find letter content to print." });
+    }
+  };
+
   const canApprove = request.status !== "Fully Approved" && request.status !== "Rejected" && !request.approvals.find(appr => appr.adminUid === currentUser?.uid) && request.approvals.length < 3;
   const canReject = request.status !== "Fully Approved" && request.status !== "Rejected";
 
-  if (isPrinting) {
-    return (
-      <div className="printable-area">
-        <ApprovalLetter request={request} />
-      </div>
-    );
-  }
 
   return (
     <TableRow>
@@ -305,19 +287,44 @@ export function RequestRow({ request }: RequestRowProps) {
                 </div>
                 </div>
                 <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsRejectDialogOpen(false)}>Cancel</Button>
-                <Button type="submit" variant="destructive" onClick={handleReject} disabled={isSubmitting}>
-                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    Confirm Rejection
-                </Button>
+                  <DialogClose asChild>
+                    <Button type="button" variant="outline">Cancel</Button>
+                  </DialogClose>
+                  <Button type="submit" variant="destructive" onClick={handleReject} disabled={isSubmitting}>
+                      {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                      Confirm Rejection
+                  </Button>
                 </DialogFooter>
             </DialogContent>
             </Dialog>
         )}
          {request.status === "Fully Approved" && (
-            <Button variant="outline" size="icon" title="Print PDF" onClick={handleTriggerPrint} className="ml-1">
-                <Printer className="h-4 w-4" />
-            </Button>
+            <Dialog open={showLetterPreviewDialog} onOpenChange={setShowLetterPreviewDialog}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="icon" title="Preview & Print Approval Letter" className="ml-1" onClick={() => setShowLetterPreviewDialog(true)}>
+                    <Printer className="h-4 w-4" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl p-0">
+                <DialogHeader className="p-6 pb-0">
+                  <DialogTitle className="font-headline">Approval Letter Preview</DialogTitle>
+                  <DialogDescription>
+                    Review the letter below. Click "Download PDF" to print or save.
+                  </DialogDescription>
+                </DialogHeader>
+                <div id="approval-letter-in-dialog-admin" className="p-6 max-h-[70vh] overflow-y-auto">
+                  <ApprovalLetter request={request} />
+                </div>
+                <DialogFooter className="p-6 pt-0">
+                  <DialogClose asChild>
+                    <Button variant="outline">Close</Button>
+                  </DialogClose>
+                  <Button onClick={handleDownloadPdfFromPreview}>
+                    <Printer className="mr-2 h-4 w-4" /> Download PDF
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
         )}
       </TableCell>
     </TableRow>

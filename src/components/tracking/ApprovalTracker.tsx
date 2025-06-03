@@ -7,6 +7,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
 import { CheckCircle2, Hourglass, Printer, User, Mail, FileText, CalendarDays, XCircle, ThumbsUp, Users, Building, Hash, Clock, List, Package, Copy } from "lucide-react";
 import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
@@ -59,31 +69,7 @@ const getStatusTextColor = (status: ApprovalRequest["status"]) => {
 
 export function ApprovalTracker({ request }: ApprovalTrackerProps) {
   const { toast } = useToast();
-  const [isPrinting, setIsPrinting] = useState(false);
-
-  useEffect(() => {
-    if (isPrinting) {
-      const timer = setTimeout(() => {
-        window.print();
-        setIsPrinting(false); 
-      }, 250); // Increased delay
-      return () => {
-        clearTimeout(timer);
-      }
-    }
-  }, [isPrinting]);
-
-  const handleTriggerPrint = () => {
-    if (request.status === "Fully Approved") {
-      setIsPrinting(true);
-    } else {
-      toast({
-        variant: "destructive",
-        title: "Cannot Print",
-        description: "The approval letter can only be printed once the request is fully approved.",
-      });
-    }
-  };
+  const [showLetterPreviewDialog, setShowLetterPreviewDialog] = useState(false);
 
   const handleCopyId = async () => {
     try {
@@ -101,14 +87,21 @@ export function ApprovalTracker({ request }: ApprovalTrackerProps) {
       });
     }
   };
+
+  const handleDownloadPdfFromPreview = () => {
+    const letterPreviewElement = document.getElementById('approval-letter-in-dialog-tracker');
+    if (letterPreviewElement) {
+      letterPreviewElement.classList.add('printable-area');
+      window.print();
+      // Delay removal to ensure print dialog has processed
+      setTimeout(() => {
+        letterPreviewElement.classList.remove('printable-area');
+      }, 500);
+    } else {
+       toast({ variant: "destructive", title: "Preview Error", description: "Could not find letter content to print." });
+    }
+  };
   
-  if (isPrinting) {
-    return (
-      <div className="printable-area">
-        <ApprovalLetter request={request} />
-      </div>
-    );
-  }
 
   return (
     <div className="main-app-content"> 
@@ -253,13 +246,35 @@ export function ApprovalTracker({ request }: ApprovalTrackerProps) {
                 <CheckCircle2 className="h-4 w-4 text-accent-foreground" />
                 <AlertTitle className="text-accent-foreground font-headline">Congratulations! Your request is fully approved.</AlertTitle>
                 <AlertDescription className="text-accent-foreground/80">
-                  An email with the approval letter has been sent to {request.submitterEmail}. 
-                  You can also print a copy of the approval document below.
+                  You can print a copy of the approval document below.
                 </AlertDescription>
               </Alert>
-              <Button onClick={handleTriggerPrint} className="w-full mt-4">
-                <Printer className="mr-2 h-4 w-4" /> Print Approval PDF
-              </Button>
+                <Dialog open={showLetterPreviewDialog} onOpenChange={setShowLetterPreviewDialog}>
+                  <DialogTrigger asChild>
+                     <Button className="w-full mt-4" onClick={() => setShowLetterPreviewDialog(true)}>
+                        <Printer className="mr-2 h-4 w-4" /> Preview & Print Approval PDF
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl p-0">
+                    <DialogHeader className="p-6 pb-0">
+                      <DialogTitle className="font-headline">Approval Letter Preview</DialogTitle>
+                      <DialogDescription>
+                        Review the letter below. Click "Download PDF" to print or save.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div id="approval-letter-in-dialog-tracker" className="p-6 max-h-[70vh] overflow-y-auto">
+                      <ApprovalLetter request={request} />
+                    </div>
+                    <DialogFooter className="p-6 pt-0">
+                      <DialogClose asChild>
+                        <Button variant="outline">Close</Button>
+                      </DialogClose>
+                      <Button onClick={handleDownloadPdfFromPreview}>
+                        <Printer className="mr-2 h-4 w-4" /> Download PDF
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
             </>
           )}
         </CardContent>
