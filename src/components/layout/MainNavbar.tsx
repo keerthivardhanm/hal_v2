@@ -40,7 +40,7 @@ export function MainNavbar() {
             <Link
               key={link.href}
               href={link.href}
-              className="transition-colors hover:text-foreground/80 text-foreground/60"
+              className="transition-colors duration-200 ease-in-out hover:text-primary text-foreground/70"
             >
               {link.icon ? <span className="flex items-center">{link.icon}{link.label}</span> : link.label}
             </Link>
@@ -49,11 +49,11 @@ export function MainNavbar() {
         <div className="flex flex-1 items-center justify-end space-x-4">
           {user ? (
             <>
-              <Button variant="ghost" onClick={() => router.push("/admin/dashboard")}>Admin Dashboard</Button>
-              <Button variant="outline" onClick={handleSignOut}>Sign Out</Button>
+              <Button variant="ghost" onClick={() => router.push("/admin/dashboard")} className="transition-colors duration-200 ease-in-out hover:text-primary">Admin Dashboard</Button>
+              <Button variant="outline" onClick={handleSignOut} className="transition-colors duration-200 ease-in-out">Sign Out</Button>
             </>
           ) : (
-            <Button asChild>
+            <Button asChild className="transition-colors duration-200 ease-in-out">
               <Link href="/admin/login">
                 <UserCircle className="mr-2 h-4 w-4" /> Admin Login
               </Link>
@@ -61,7 +61,7 @@ export function MainNavbar() {
           )}
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" className="md:hidden">
+              <Button variant="ghost" className="md:hidden transition-colors duration-200 ease-in-out">
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">Toggle Menu</span>
               </Button>
@@ -76,7 +76,7 @@ export function MainNavbar() {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="transition-colors hover:text-foreground text-foreground/80 flex items-center"
+                    className="transition-colors duration-200 ease-in-out hover:text-primary text-foreground/80 flex items-center"
                   >
                     {link.icon} {link.label}
                   </Link>

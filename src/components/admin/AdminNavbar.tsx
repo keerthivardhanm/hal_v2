@@ -32,7 +32,7 @@ export function AdminNavbar() {
         <nav className="flex items-center space-x-6 text-sm font-medium">
           <Link
             href="/admin/dashboard"
-            className="transition-colors hover:text-foreground/80 text-foreground/60 flex items-center"
+            className="transition-colors duration-200 ease-in-out hover:text-primary text-foreground/70 flex items-center"
           >
             <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
           </Link>
@@ -43,7 +43,7 @@ export function AdminNavbar() {
               Welcome, {user.email}
             </span>
           )}
-          <Button variant="outline" onClick={handleSignOut}>
+          <Button variant="outline" onClick={handleSignOut} className="transition-colors duration-200 ease-in-out">
             <LogOut className="mr-2 h-4 w-4" /> Sign Out
           </Button>
         </div>

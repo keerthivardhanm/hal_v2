@@ -20,7 +20,7 @@ export default function TrackRequestPage() {
 
   return (
     <div className="container mx-auto py-12 px-4 md:px-6 flex justify-center">
-      <Card className="w-full max-w-lg shadow-xl">
+      <Card className="w-full max-w-lg shadow-xl transition-all duration-300 ease-in-out hover:shadow-2xl hover:scale-[1.02]">
         <CardHeader>
           <CardTitle className="text-2xl font-headline flex items-center">
              <Search className="mr-2 h-6 w-6 text-primary" /> Track Your Approval Request

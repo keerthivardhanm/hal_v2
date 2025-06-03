@@ -4,7 +4,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { Toaster } from "@/components/ui/toaster";
 import { Inter } from 'next/font/google'; // Using next/font for Inter
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
 
 export const metadata: Metadata = {
   title: 'ApprovalFlow',
@@ -19,14 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable}`}>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {/* Inter font is now handled by next/font, but keeping existing links if they were for other fonts. 
-            The prompt explicitly mentioned Inter to be used via next/font if possible, 
-            but general guidelines suggest <link> tags. Sticking to next/font for Inter as it's best practice.
-            If other fonts are needed, add <link> tags below.
-        */}
-         <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet"></link>
+        {/* Removed preconnect and Google Fonts link for Inter as next/font handles it */}
       </head>
       <body className="font-body antialiased">
         <AuthProvider>
