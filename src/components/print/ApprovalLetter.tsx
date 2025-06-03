@@ -20,16 +20,7 @@ export function ApprovalLetter({ request }: ApprovalLetterProps) {
 
   return (
     <div className="p-8 bg-white text-black font-serif text-xs print-letter-container">
-      {/* Styles specifically for this component when printed, ensuring it adheres to the A4 format */}
-      <style jsx global>{`
-        @media print {
-          .print-letter-container {
-            width: 210mm; /* A4 width */
-            height: 297mm; /* A4 height */
-            box-sizing: border-box; /* Include padding and border in the element's total width and height */
-          }
-        }
-      `}</style>
+      {/* Removed inline A4 sizing, will rely on @page from globals.css */}
       <header className="flex justify-between items-start mb-6">
         <div>
           <p className="font-bold">OFFICE OF DGM (IT)</p>
