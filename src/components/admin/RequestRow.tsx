@@ -20,7 +20,7 @@ import { Label } from "@/components/ui/label";
 import { ThumbsUp, ThumbsDown, Eye, CheckCircle2, Hourglass, XCircle, CalendarDays, User, Mail, FileText, Loader2, Building, Hash, Clock, List, Package, Printer } from "lucide-react";
 import { format } from "date-fns";
 import { useState, type ReactNode } from "react";
-import { doc, updateDoc, arrayUnion, serverTimestamp } from "firebase/firestore";
+import { doc, updateDoc, arrayUnion, serverTimestamp, Timestamp } from "firebase/firestore"; // Added Timestamp
 import { db, auth } from "@/config/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -43,18 +43,18 @@ const StatusInfo = ({ status }: { status: ApprovalRequest["status"] }) => {
       break;
     case "Level 1 Approved":
       icon = <ThumbsUp className="h-4 w-4" />;
-      badgeVariant = "outline"; 
+      badgeVariant = "outline";
       textColor = "text-sky-600 dark:text-sky-400";
       break;
     case "Level 2 Approved":
       icon = <ThumbsUp className="h-4 w-4" />;
-      badgeVariant = "outline"; 
+      badgeVariant = "outline";
       textColor = "text-indigo-600 dark:text-indigo-400";
       break;
     case "Fully Approved":
       icon = <CheckCircle2 className="h-4 w-4" />;
-      badgeVariant = "default"; 
-      textColor = "text-green-600 dark:text-green-400"; 
+      badgeVariant = "default";
+      textColor = "text-green-600 dark:text-green-400";
       break;
     case "Rejected":
       icon = <XCircle className="h-4 w-4" />;
@@ -104,7 +104,7 @@ export function RequestRow({ request }: RequestRowProps) {
       const newApproval = {
         adminUid: currentUser.uid,
         adminEmail: currentUser.email || "N/A",
-        approvedAt: serverTimestamp(),
+        approvedAt: Timestamp.now(), // Changed from serverTimestamp()
         level: newApprovalLevel,
       };
 
@@ -112,7 +112,7 @@ export function RequestRow({ request }: RequestRowProps) {
       if (newApprovalLevel === 1) newStatus = "Level 1 Approved";
       else if (newApprovalLevel === 2) newStatus = "Level 2 Approved";
       else if (newApprovalLevel >= 3) newStatus = "Fully Approved";
-      
+
 
       await updateDoc(requestRef, {
         approvals: arrayUnion(newApproval),
@@ -121,6 +121,7 @@ export function RequestRow({ request }: RequestRowProps) {
 
       toast({ title: "Request Approved", description: `Level ${newApproval.level} approval successful.` });
     } catch (error: any) {
+      console.error("Approval error:", error);
       toast({ variant: "destructive", title: "Approval Failed", description: error.message });
     } finally {
       setIsSubmitting(false);
@@ -147,17 +148,20 @@ export function RequestRow({ request }: RequestRowProps) {
         status: "Rejected",
         isRejected: true,
         rejectionReason: rejectionReason,
+        // Optionally add a server timestamp for rejection time if needed, for example:
+        // rejectedAt: serverTimestamp(), 
       });
       toast({ title: "Request Rejected", description: "The request has been marked as rejected." });
       setIsRejectDialogOpen(false);
       setRejectionReason("");
     } catch (error: any) {
+      console.error("Rejection error:", error);
       toast({ variant: "destructive", title: "Rejection Failed", description: error.message });
     } finally {
       setIsSubmitting(false);
     }
   };
-  
+
   const canApprove = request.status !== "Fully Approved" && request.status !== "Rejected" && !request.approvals.find(appr => appr.adminUid === currentUser?.uid) && request.approvals.length < 3;
   const canReject = request.status !== "Fully Approved" && request.status !== "Rejected";
 
@@ -167,7 +171,7 @@ export function RequestRow({ request }: RequestRowProps) {
       <TableCell className="font-medium hidden md:table-cell">{request.id.substring(0, 8)}...</TableCell>
       <TableCell>{request.submitterName}</TableCell>
       <TableCell className="hidden sm:table-cell">{request.submitterEmail}</TableCell>
-      <TableCell className="hidden lg:table-cell">{format(request.submittedAt.toDate(), "PP")}</TableCell>
+      <TableCell className="hidden lg:table-cell">{request.submittedAt && request.submittedAt.toDate ? format(request.submittedAt.toDate(), "PP") : 'N/A'}</TableCell>
       <TableCell>
         <StatusInfo status={request.status} />
       </TableCell>
@@ -191,7 +195,7 @@ export function RequestRow({ request }: RequestRowProps) {
                 <div className="flex items-center"><Building className="mr-2 h-4 w-4 text-muted-foreground" /><strong>Organisation:</strong> <span className="ml-1">{request.organisationName}</span></div>
                 <div className="flex items-center"><Hash className="mr-2 h-4 w-4 text-muted-foreground" /><strong>ID No:</strong> <span className="ml-1">{request.submitterIdNo}</span></div>
                 <Separator />
-                <div className="flex items-center"><CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" /><strong>Requested Date:</strong> <span className="ml-1">{format(request.requestDate.toDate(), 'PPP')}</span></div>
+                <div className="flex items-center"><CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" /><strong>Requested Date:</strong> <span className="ml-1">{request.requestDate && request.requestDate.toDate ? format(request.requestDate.toDate(), 'PPP') : 'N/A'}</span></div>
                 <div className="flex items-center"><Clock className="mr-2 h-4 w-4 text-muted-foreground" /><strong>Requested Time:</strong> <span className="ml-1">{request.requestTime}</span></div>
                 <div className="flex items-center"><Package className="mr-2 h-4 w-4 text-muted-foreground" /><strong>No. of Items:</strong> <span className="ml-1">{request.numberOfItems}</span></div>
                 <Separator />
@@ -203,7 +207,7 @@ export function RequestRow({ request }: RequestRowProps) {
                 <div className="flex items-start"><FileText className="mr-2 h-4 w-4 text-muted-foreground mt-1" /><strong>Purpose:</strong></div>
                 <p className="ml-6 p-2 bg-muted/50 rounded-md whitespace-pre-wrap">{request.purpose}</p>
                  <Separator />
-                <div className="flex items-center"><CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" /><strong>Submitted At:</strong> <span className="ml-1">{format(request.submittedAt.toDate(), 'PPPp')}</span></div>
+                <div className="flex items-center"><CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" /><strong>Submitted At:</strong> <span className="ml-1">{request.submittedAt && request.submittedAt.toDate ? format(request.submittedAt.toDate(), 'PPPp') : 'N/A'}</span></div>
 
                 {request.isRejected && request.rejectionReason && (
                     <>
@@ -218,9 +222,9 @@ export function RequestRow({ request }: RequestRowProps) {
                 <h4 className="font-semibold">Approval Log:</h4>
                 {request.approvals.length > 0 ? (
                     <ul className="space-y-2 ml-2">
-                    {request.approvals.sort((a,b) => a.level - b.level).map(appr => ( // Sort by level
+                    {request.approvals.sort((a,b) => a.level - b.level).map(appr => (
                         <li key={appr.adminUid + appr.level} className="text-xs">
-                            <Badge variant="secondary" className="mr-1">Lvl {appr.level}</Badge> Approved by {appr.adminEmail} on {appr.approvedAt ? format(appr.approvedAt.toDate(), 'PPp') : 'Processing...'}
+                            <Badge variant="secondary" className="mr-1">Lvl {appr.level}</Badge> Approved by {appr.adminEmail} on {appr.approvedAt && appr.approvedAt.toDate ? format(appr.approvedAt.toDate(), 'PPp') : 'Processing...'}
                         </li>
                     ))}
                     </ul>
@@ -233,8 +237,6 @@ export function RequestRow({ request }: RequestRowProps) {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-
-        {/* AI Suggestion Button and Dialog Removed */}
 
         {canApprove && (
             <Button variant="ghost" size="icon" title="Approve" onClick={handleApprove} disabled={isSubmitting}>
@@ -289,5 +291,3 @@ export function RequestRow({ request }: RequestRowProps) {
     </TableRow>
   );
 }
-
-    
