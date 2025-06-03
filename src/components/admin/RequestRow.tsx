@@ -17,13 +17,12 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { ThumbsUp, ThumbsDown, Eye, Sparkles, CheckCircle2, Hourglass, XCircle, CalendarDays, User, Mail, FileText, Loader2, Building, Hash, Clock, List, Package, Printer } from "lucide-react";
+import { ThumbsUp, ThumbsDown, Eye, CheckCircle2, Hourglass, XCircle, CalendarDays, User, Mail, FileText, Loader2, Building, Hash, Clock, List, Package, Printer } from "lucide-react";
 import { format } from "date-fns";
 import { useState, type ReactNode } from "react";
-import { doc, updateDoc, arrayUnion, serverTimestamp, getDoc } from "firebase/firestore";
+import { doc, updateDoc, arrayUnion, serverTimestamp } from "firebase/firestore";
 import { db, auth } from "@/config/firebase";
 import { useToast } from "@/hooks/use-toast";
-import { suggestDocumentContent, type SuggestDocumentContentInput } from "@/ai/flows/suggest-document-content";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 
@@ -81,10 +80,6 @@ export function RequestRow({ request }: RequestRowProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
-  const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
-  const [aiSuggestionError, setAiSuggestionError] = useState<string | null>(null);
-  const [isAiLoading, setIsAiLoading] = useState(false);
-  const [isAiDialogOpen, setIsAiDialogOpen] = useState(false);
 
   const currentUser = auth.currentUser;
 
@@ -94,7 +89,7 @@ export function RequestRow({ request }: RequestRowProps) {
       return;
     }
     if (request.approvals.find(appr => appr.adminUid === currentUser.uid)) {
-      toast({ variant: "destructive", title: "Already Approved", description: "You have already approved this request." });
+      toast({ variant: "destructive", title: "Already Approved", description: "You have already approved this request at some level." });
       return;
     }
     if (request.status === "Fully Approved" || request.status === "Rejected" || request.approvals.length >= 3) {
@@ -160,47 +155,6 @@ export function RequestRow({ request }: RequestRowProps) {
       toast({ variant: "destructive", title: "Rejection Failed", description: error.message });
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const handleAiSuggest = async () => {
-    setIsAiLoading(true);
-    setAiSuggestion(null); 
-    setAiSuggestionError(null);
-    setIsAiDialogOpen(true); 
-    try {
-      const requestRef = doc(db, "approval_requests", request.id);
-      const docSnap = await getDoc(requestRef);
-      if (!docSnap.exists()) {
-        const errorMsg = "Request data not found.";
-        setAiSuggestionError(errorMsg);
-        toast({ variant: "destructive", title: "Error", description: errorMsg });
-        setIsAiLoading(false); 
-        return;
-      }
-      const currentRequestData = docSnap.data() as ApprovalRequest;
-
-      const formDataForAI: SuggestDocumentContentInput['formData'] = {
-        submitterName: currentRequestData.submitterName,
-        submitterEmail: currentRequestData.submitterEmail,
-        organisationName: currentRequestData.organisationName,
-        submitterIdNo: currentRequestData.submitterIdNo,
-        purpose: currentRequestData.purpose,
-        requestDate: format(currentRequestData.requestDate.toDate(), "yyyy-MM-dd"),
-        requestTime: currentRequestData.requestTime,
-        numberOfItems: currentRequestData.numberOfItems,
-        finalSelectedGadgets: currentRequestData.finalSelectedGadgets,
-      };
-
-      const result = await suggestDocumentContent({ formData: formDataForAI });
-      setAiSuggestion(result.documentContentSuggestion);
-    } catch (error: any) {
-      console.error("AI Suggestion Error:", error);
-      const errorMsg = error.message || "Could not generate suggestion.";
-      setAiSuggestionError(errorMsg);
-      toast({ variant: "destructive", title: "AI Suggestion Failed", description: errorMsg });
-    } finally {
-      setIsAiLoading(false); 
     }
   };
   
@@ -280,39 +234,7 @@ export function RequestRow({ request }: RequestRowProps) {
           </DialogContent>
         </Dialog>
 
-        <Dialog open={isAiDialogOpen} onOpenChange={setIsAiDialogOpen}>
-          <DialogTrigger asChild>
-            <Button variant="ghost" size="icon" title="AI Suggest Content" onClick={handleAiSuggest} disabled={isAiLoading && isAiDialogOpen}>
-              {(isAiLoading && isAiDialogOpen) ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                  <DialogTitle className="font-headline flex items-center"><Sparkles className="h-5 w-5 mr-2 text-primary" />AI Document Suggestion</DialogTitle>
-                  <DialogDescription>
-                      {isAiLoading ? "Generating suggestion..." : "Here's an AI-generated suggestion based on the request details. Use this as inspiration."}
-                  </DialogDescription>
-              </DialogHeader>
-              {isAiLoading ? (
-                <div className="flex items-center justify-center h-32">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-              ) : aiSuggestionError ? (
-                <Alert variant="destructive" className="my-4">
-                  <XCircle className="h-4 w-4" />
-                  <AlertDescription>{aiSuggestionError}</AlertDescription>
-                </Alert>
-              ): aiSuggestion ? (
-                  <Textarea readOnly value={aiSuggestion} rows={10} className="my-4" />
-              ) : (
-                  <p className="my-4 text-muted-foreground">No suggestion available or an error occurred.</p>
-              )}
-              <DialogFooter>
-                  <Button type="button" variant="secondary" onClick={() => setIsAiDialogOpen(false)}>Close</Button>
-              </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
+        {/* AI Suggestion Button and Dialog Removed */}
 
         {canApprove && (
             <Button variant="ghost" size="icon" title="Approve" onClick={handleApprove} disabled={isSubmitting}>
