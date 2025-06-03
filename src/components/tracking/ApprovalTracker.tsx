@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CheckCircle2, Hourglass, Printer, User, Mail, FileText, CalendarDays, XCircle, ThumbsUp, Users, Building, Hash, Clock, List, Package } from "lucide-react";
+import { CheckCircle2, Hourglass, Printer, User, Mail, FileText, CalendarDays, XCircle, ThumbsUp, Users, Building, Hash, Clock, List, Package, Copy } from "lucide-react";
 import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { ApprovalLetter } from "@/components/print/ApprovalLetter";
@@ -84,6 +84,23 @@ export function ApprovalTracker({ request }: ApprovalTrackerProps) {
       });
     }
   };
+
+  const handleCopyId = async () => {
+    try {
+      await navigator.clipboard.writeText(request.id);
+      toast({
+        title: "Request ID Copied!",
+        description: "The ID has been copied to your clipboard.",
+      });
+    } catch (err) {
+      console.error("Failed to copy ID: ", err);
+      toast({
+        variant: "destructive",
+        title: "Copy Failed",
+        description: "Could not copy the ID to clipboard. Make sure you are on HTTPS or localhost.",
+      });
+    }
+  };
   
   if (isPrinting) {
     return (
@@ -97,18 +114,28 @@ export function ApprovalTracker({ request }: ApprovalTrackerProps) {
     <div className="main-app-content"> 
       <Card className="w-full max-w-3xl mx-auto shadow-xl">
         <CardHeader>
-          <CardTitle className="text-2xl font-headline flex items-center">
-            <StatusIcon status={request.status} /> Approval Status: {request.id.substring(0,8)}...
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-2xl font-headline flex items-center">
+              <StatusIcon status={request.status} /> Approval Status
+            </CardTitle>
+            <Badge 
+              variant={getStatusBadgeVariant(request.status)} 
+              className={`text-sm px-3 py-1 ${getStatusTextColor(request.status)} ${getStatusBadgeVariant(request.status) === 'default' ? '' : `border-${getStatusTextColor(request.status).split('-')[1]}-500`}`}
+            >
+              {request.status}
+            </Badge>
+          </div>
           <CardDescription>
             Submitted on: {request.submittedAt ? format(request.submittedAt.toDate(), 'PPPp') : 'N/A'}
           </CardDescription>
-          <Badge 
-            variant={getStatusBadgeVariant(request.status)} 
-            className={`w-fit text-sm px-3 py-1 mt-2 ${getStatusTextColor(request.status)} ${getStatusBadgeVariant(request.status) === 'default' ? '' : `border-${getStatusTextColor(request.status).split('-')[1]}-500`}`}
-          >
-            {request.status}
-          </Badge>
+          <div className="flex items-center space-x-2 pt-2">
+            <span className="text-sm font-mono text-muted-foreground bg-muted px-2 py-1 rounded break-all">
+              ID: {request.id}
+            </span>
+            <Button variant="outline" size="icon" onClick={handleCopyId} title="Copy Request ID">
+              <Copy className="h-4 w-4" />
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-4">

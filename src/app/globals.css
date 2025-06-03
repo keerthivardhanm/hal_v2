@@ -89,42 +89,52 @@ body {
 }
 
 @media print {
-  body {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-    background-color: white !important;
+  html, body {
+    height: auto !important;
+    overflow: visible !important;
+    background: white !important; /* Ensure the entire page context is white */
     color: black !important;
     margin: 0 !important;
     padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
-  /* Hide everything by default when printing */
-  body * {
+  /* Hide everything by default */
+  body > *:not(.printable-area) {
+    display: none !important;
     visibility: hidden !important;
   }
-
-  /* Make the printable area and its children visible */
-  .printable-area, .printable-area * {
-    visibility: visible !important;
-  }
-
-  /* Position the printable area to take up the page */
-  .printable-area {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
-    width: 100% !important; /* Takes full width within @page margins */
-    height: auto !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    background-color: white !important;
-    z-index: 9999 !important;
+  
+  /* For elements potentially outside direct body children (e.g., portals for dialogs/toasts) */
+  body > div[id^="radix-"], body > div[data-radix-portal] {
+    display: none !important;
+    visibility: hidden !important;
   }
   
-  /* These are fallbacks, the visibility rules should handle them */
-  .main-app-content > header, .main-app-content > footer,
-  .admin-app-content > header, .admin-app-content > footer,
-  .no-print {
+  .printable-area {
+    position: relative !important; /* Changed from absolute for simpler flow */
+    display: block !important;
+    visibility: visible !important;
+    width: 100% !important;
+    min-height: 100vh; /* Ensure it tries to take up printable page height */
+    margin: 0 !important;
+    padding: 0 !important; /* Padding should be handled by @page margins or within ApprovalLetter */
+    background: white !important;
+    color: black !important;
+    font-size: 12pt; /* Example base font size for print */
+    z-index: 0 !important; /* Reset z-index to avoid conflict */
+  }
+
+  .printable-area * {
+    visibility: visible !important;
+    color: black !important; /* Ensure all children also have black text */
+    background-color: transparent !important; /* Prevent themed backgrounds */
+    box-shadow: none !important;
+  }
+  
+  /* Ensure specific layout containers are hidden if they somehow persist */
+  .main-app-content, .admin-app-content, header, footer, nav, aside, .no-print {
     display: none !important;
     visibility: hidden !important;
   }
