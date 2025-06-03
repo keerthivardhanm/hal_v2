@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { ApprovalRequest } from "@/types";
@@ -6,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CheckCircle2, Hourglass, Printer, User, Mail, FileText, CalendarDays, XCircle, ThumbsUp, Users } from "lucide-react";
+import { CheckCircle2, Hourglass, Printer, User, Mail, FileText, CalendarDays, XCircle, ThumbsUp, Users, Building, Hash, Clock, List, Package } from "lucide-react";
 import { format } from 'date-fns';
 
 interface ApprovalTrackerProps {
@@ -33,18 +34,16 @@ const getStatusBadgeVariant = (status: ApprovalRequest["status"]) => {
   switch (status) {
     case "Pending": return "secondary";
     case "Level 1 Approved": 
-    case "Level 2 Approved": return "default"; // Blueish
-    case "Fully Approved": return "default"; // Use default (primary) for fully approved, or make an accent one
+    case "Level 2 Approved": return "default"; 
+    case "Fully Approved": return "default"; 
     case "Rejected": return "destructive";
     default: return "outline";
   }
 };
 
 
-export function ApprovalTracker({ request }: ApprovalTrackerProps) {
+export function ApprovalTracker({ request }: ApprovalRequestProps) {
   const handlePrintPdf = () => {
-    // In a real app, this would trigger PDF generation and printing.
-    // For now, it's a placeholder.
     alert("PDF Print option functionality would be implemented here.");
     window.print();
   };
@@ -53,7 +52,7 @@ export function ApprovalTracker({ request }: ApprovalTrackerProps) {
     <Card className="w-full max-w-3xl mx-auto shadow-xl">
       <CardHeader>
         <CardTitle className="text-2xl font-headline flex items-center">
-          <StatusIcon status={request.status} /> Approval Status: {request.id}
+          <StatusIcon status={request.status} /> Approval Status: {request.id.substring(0,8)}...
         </CardTitle>
         <CardDescription>
           Submitted on: {request.submittedAt ? format(request.submittedAt.toDate(), 'PPPp') : 'N/A'}
@@ -74,18 +73,63 @@ export function ApprovalTracker({ request }: ApprovalTrackerProps) {
               <Mail className="mr-2 h-4 w-4 text-muted-foreground" />
               <strong>Email:</strong> <span className="ml-1">{request.submitterEmail}</span>
             </div>
+            <div className="flex items-center">
+              <Building className="mr-2 h-4 w-4 text-muted-foreground" />
+              <strong>Organisation:</strong> <span className="ml-1">{request.organisationName}</span>
+            </div>
+            <div className="flex items-center">
+              <Hash className="mr-2 h-4 w-4 text-muted-foreground" />
+              <strong>ID No:</strong> <span className="ml-1">{request.submitterIdNo}</span>
+            </div>
           </div>
         </div>
 
         <Separator />
-
+        
         <div className="space-y-2">
           <h3 className="text-lg font-semibold font-headline flex items-center">
-            <FileText className="mr-2 h-5 w-5 text-primary" /> Request Details
+            <FileText className="mr-2 h-5 w-5 text-primary" /> Purpose of Request
           </h3>
           <p className="text-sm text-muted-foreground whitespace-pre-wrap bg-secondary p-4 rounded-md">
-            {request.requestDetails}
+            {request.purpose}
           </p>
+        </div>
+
+        <Separator />
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold font-headline">Request Specifics</h3>
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div className="flex items-center">
+              <CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" />
+              <strong>Requested Date:</strong> <span className="ml-1">{request.requestDate ? format(request.requestDate.toDate(), 'PPP') : 'N/A'}</span>
+            </div>
+            <div className="flex items-center">
+              <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
+              <strong>Requested Time:</strong> <span className="ml-1">{request.requestTime}</span>
+            </div>
+            <div className="flex items-center">
+              <Package className="mr-2 h-4 w-4 text-muted-foreground" />
+              <strong>Number of Items:</strong> <span className="ml-1">{request.numberOfItems}</span>
+            </div>
+          </div>
+        </div>
+
+        <Separator />
+        
+        <div className="space-y-2">
+          <h3 className="text-lg font-semibold font-headline flex items-center">
+            <List className="mr-2 h-5 w-5 text-primary" /> Selected Gadgets
+          </h3>
+          {request.finalSelectedGadgets && request.finalSelectedGadgets.length > 0 ? (
+            <ul className="list-disc list-inside pl-4 space-y-1 text-sm text-muted-foreground">
+              {request.finalSelectedGadgets.map((gadget, index) => (
+                <li key={index}>{gadget}</li>
+              ))}
+            </ul>
+          ) : (
+             <p className="text-sm text-muted-foreground">No gadgets specified.</p>
+          )}
         </div>
         
         {request.isRejected && request.rejectionReason && (

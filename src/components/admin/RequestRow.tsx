@@ -17,13 +17,13 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { ThumbsUp, ThumbsDown, Eye, Sparkles, CheckCircle2, Hourglass, XCircle, CalendarDays, User, Mail, FileText, Loader2 } from "lucide-react";
-import { format } from "date-fns";
+import { ThumbsUp, ThumbsDown, Eye, Sparkles, CheckCircle2, Hourglass, XCircle, CalendarDays, User, Mail, FileText, Loader2, Building, Hash, Clock, List, Package } from "lucide-react";
+import { format, formatISO } from "date-fns";
 import { useState, type ReactNode } from "react";
 import { doc, updateDoc, arrayUnion, serverTimestamp, getDoc } from "firebase/firestore";
 import { db, auth } from "@/config/firebase";
 import { useToast } from "@/hooks/use-toast";
-import { suggestDocumentContent, type SuggestDocumentContentInput } from "@/ai/flows/suggest-document-content"; // AI Flow
+import { suggestDocumentContent, type SuggestDocumentContentInput } from "@/ai/flows/suggest-document-content";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 
@@ -162,7 +162,7 @@ export function RequestRow({ request }: RequestRowProps) {
     setIsAiLoading(true);
     setAiSuggestion(null); 
     setAiSuggestionError(null);
-    setIsAiDialogOpen(true); // Open dialog immediately
+    setIsAiDialogOpen(true); 
     try {
       const requestRef = doc(db, "approval_requests", request.id);
       const docSnap = await getDoc(requestRef);
@@ -170,7 +170,7 @@ export function RequestRow({ request }: RequestRowProps) {
         const errorMsg = "Request data not found.";
         setAiSuggestionError(errorMsg);
         toast({ variant: "destructive", title: "Error", description: errorMsg });
-        setIsAiLoading(false); // Stop loading in dialog
+        setIsAiLoading(false); 
         return;
       }
       const currentRequestData = docSnap.data() as ApprovalRequest;
@@ -178,7 +178,13 @@ export function RequestRow({ request }: RequestRowProps) {
       const formDataForAI: SuggestDocumentContentInput['formData'] = {
         submitterName: currentRequestData.submitterName,
         submitterEmail: currentRequestData.submitterEmail,
-        requestDetails: currentRequestData.requestDetails,
+        organisationName: currentRequestData.organisationName,
+        submitterIdNo: currentRequestData.submitterIdNo,
+        purpose: currentRequestData.purpose,
+        requestDate: format(currentRequestData.requestDate.toDate(), "yyyy-MM-dd"),
+        requestTime: currentRequestData.requestTime,
+        numberOfItems: currentRequestData.numberOfItems,
+        finalSelectedGadgets: currentRequestData.finalSelectedGadgets,
       };
 
       const result = await suggestDocumentContent({ formData: formDataForAI });
@@ -189,7 +195,7 @@ export function RequestRow({ request }: RequestRowProps) {
       setAiSuggestionError(errorMsg);
       toast({ variant: "destructive", title: "AI Suggestion Failed", description: errorMsg });
     } finally {
-      setIsAiLoading(false); // Stop loading in dialog
+      setIsAiLoading(false); 
     }
   };
   
@@ -220,18 +226,34 @@ export function RequestRow({ request }: RequestRowProps) {
                 Full details of the approval request.
               </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4 text-sm">
+            <div className="grid gap-4 py-4 text-sm max-h-[70vh] overflow-y-auto pr-2">
                 <div className="flex items-center"><User className="mr-2 h-4 w-4 text-muted-foreground" /><strong>Name:</strong> <span className="ml-1">{request.submitterName}</span></div>
                 <div className="flex items-center"><Mail className="mr-2 h-4 w-4 text-muted-foreground" /><strong>Email:</strong> <span className="ml-1">{request.submitterEmail}</span></div>
-                <div className="flex items-center"><CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" /><strong>Submitted:</strong> <span className="ml-1">{format(request.submittedAt.toDate(), 'PPPp')}</span></div>
+                <div className="flex items-center"><Building className="mr-2 h-4 w-4 text-muted-foreground" /><strong>Organisation:</strong> <span className="ml-1">{request.organisationName}</span></div>
+                <div className="flex items-center"><Hash className="mr-2 h-4 w-4 text-muted-foreground" /><strong>ID No:</strong> <span className="ml-1">{request.submitterIdNo}</span></div>
                 <Separator />
-                <div className="flex items-start"><FileText className="mr-2 h-4 w-4 text-muted-foreground mt-1" /><strong>Details:</strong></div>
-                <p className="ml-6 p-2 bg-muted/50 rounded-md whitespace-pre-wrap">{request.requestDetails}</p>
+                <div className="flex items-center"><CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" /><strong>Requested Date:</strong> <span className="ml-1">{format(request.requestDate.toDate(), 'PPP')}</span></div>
+                <div className="flex items-center"><Clock className="mr-2 h-4 w-4 text-muted-foreground" /><strong>Requested Time:</strong> <span className="ml-1">{request.requestTime}</span></div>
+                <div className="flex items-center"><Package className="mr-2 h-4 w-4 text-muted-foreground" /><strong>No. of Items:</strong> <span className="ml-1">{request.numberOfItems}</span></div>
+                <Separator />
+                <div className="flex items-start"><List className="mr-2 h-4 w-4 text-muted-foreground mt-1" /><strong>Selected Gadgets:</strong></div>
+                <ul className="ml-6 list-disc space-y-1">
+                    {request.finalSelectedGadgets.map(gadget => <li key={gadget}>{gadget}</li>)}
+                </ul>
+                <Separator />
+                <div className="flex items-start"><FileText className="mr-2 h-4 w-4 text-muted-foreground mt-1" /><strong>Purpose:</strong></div>
+                <p className="ml-6 p-2 bg-muted/50 rounded-md whitespace-pre-wrap">{request.purpose}</p>
+                 <Separator />
+                <div className="flex items-center"><CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" /><strong>Submitted At:</strong> <span className="ml-1">{format(request.submittedAt.toDate(), 'PPPp')}</span></div>
+
                 {request.isRejected && request.rejectionReason && (
+                    <>
+                    <Separator />
                     <Alert variant="destructive" className="mt-2">
                         <XCircle className="h-4 w-4" />
                         <AlertDescription><strong>Rejection Reason:</strong> {request.rejectionReason}</AlertDescription>
                     </Alert>
+                    </>
                 )}
                 <Separator />
                 <h4 className="font-semibold">Approval Log:</h4>

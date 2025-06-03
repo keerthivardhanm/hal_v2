@@ -15,14 +15,24 @@ export type ApprovalStatus =
   | "Rejected";
 
 export interface ApprovalRequest {
-  id: string;
+  id: string; // Firestore document ID
+
+  // Form fields
   submitterName: string;
-  submitterEmail: string;
-  requestDetails: string;
+  submitterEmail: string; // Main contact email
+  organisationName: string;
+  submitterIdNo: string; 
+  purpose: string;
+  requestDate: Timestamp; 
+  requestTime: string; // HH:MM format
+  numberOfItems: number;
+  finalSelectedGadgets: string[]; // Stores names of selected gadgets, e.g., ["Mobile", "Laptop", "Custom Gadget"]
+
+  // System fields
   submittedAt: Timestamp;
   status: ApprovalStatus;
   approvals: Approval[];
   isRejected?: boolean;
   rejectionReason?: string;
-  aiSuggestedContent?: string; // Optional, if admins want to save a suggestion
+  aiSuggestedContent?: string; 
 }
