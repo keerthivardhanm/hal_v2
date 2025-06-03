@@ -17,8 +17,8 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { ThumbsUp, ThumbsDown, Eye, Sparkles, CheckCircle2, Hourglass, XCircle, CalendarDays, User, Mail, FileText, Loader2, Building, Hash, Clock, List, Package } from "lucide-react";
-import { format, formatISO } from "date-fns";
+import { ThumbsUp, ThumbsDown, Eye, Sparkles, CheckCircle2, Hourglass, XCircle, CalendarDays, User, Mail, FileText, Loader2, Building, Hash, Clock, List, Package, Printer } from "lucide-react";
+import { format } from "date-fns";
 import { useState, type ReactNode } from "react";
 import { doc, updateDoc, arrayUnion, serverTimestamp, getDoc } from "firebase/firestore";
 import { db, auth } from "@/config/firebase";
@@ -43,10 +43,14 @@ const StatusInfo = ({ status }: { status: ApprovalRequest["status"] }) => {
       textColor = "text-yellow-600 dark:text-yellow-400";
       break;
     case "Level 1 Approved":
+      icon = <ThumbsUp className="h-4 w-4" />;
+      badgeVariant = "outline"; 
+      textColor = "text-sky-600 dark:text-sky-400";
+      break;
     case "Level 2 Approved":
       icon = <ThumbsUp className="h-4 w-4" />;
-      badgeVariant = "default"; 
-      textColor = "text-primary";
+      badgeVariant = "outline"; 
+      textColor = "text-indigo-600 dark:text-indigo-400";
       break;
     case "Fully Approved":
       icon = <CheckCircle2 className="h-4 w-4" />;
@@ -64,7 +68,7 @@ const StatusInfo = ({ status }: { status: ApprovalRequest["status"] }) => {
       textColor = "text-muted-foreground";
   }
   return (
-    <Badge variant={badgeVariant} className={`flex items-center gap-1 ${textColor}`}>
+    <Badge variant={badgeVariant} className={`flex items-center gap-1 ${textColor} border-${badgeVariant === "outline" ? textColor.split('-')[1] + '-500' : 'transparent'}`}>
       {icon}
       {status}
     </Badge>
@@ -93,25 +97,26 @@ export function RequestRow({ request }: RequestRowProps) {
       toast({ variant: "destructive", title: "Already Approved", description: "You have already approved this request." });
       return;
     }
-    if (request.status === "Fully Approved" || request.status === "Rejected") {
-        toast({ variant: "destructive", title: "Action Not Allowed", description: "This request is already finalized or rejected." });
+    if (request.status === "Fully Approved" || request.status === "Rejected" || request.approvals.length >= 3) {
+        toast({ variant: "destructive", title: "Action Not Allowed", description: "This request is already finalized, rejected, or has maximum approvals." });
         return;
     }
 
     setIsSubmitting(true);
     try {
       const requestRef = doc(db, "approval_requests", request.id);
+      const newApprovalLevel = request.approvals.length + 1;
       const newApproval = {
         adminUid: currentUser.uid,
         adminEmail: currentUser.email || "N/A",
         approvedAt: serverTimestamp(),
-        level: request.approvals.length + 1,
+        level: newApprovalLevel,
       };
 
       let newStatus: ApprovalRequest["status"] = request.status;
-      if (newApproval.level === 1) newStatus = "Level 1 Approved";
-      else if (newApproval.level === 2) newStatus = "Level 2 Approved";
-      else if (newApproval.level >= 3) newStatus = "Fully Approved";
+      if (newApprovalLevel === 1) newStatus = "Level 1 Approved";
+      else if (newApprovalLevel === 2) newStatus = "Level 2 Approved";
+      else if (newApprovalLevel >= 3) newStatus = "Fully Approved";
       
 
       await updateDoc(requestRef, {
@@ -259,9 +264,9 @@ export function RequestRow({ request }: RequestRowProps) {
                 <h4 className="font-semibold">Approval Log:</h4>
                 {request.approvals.length > 0 ? (
                     <ul className="space-y-2 ml-2">
-                    {request.approvals.map(appr => (
-                        <li key={appr.adminUid} className="text-xs">
-                            <Badge variant="secondary" className="mr-1">Lvl {appr.level}</Badge> Approved by {appr.adminEmail} on {format(appr.approvedAt.toDate(), 'PPp')}
+                    {request.approvals.sort((a,b) => a.level - b.level).map(appr => ( // Sort by level
+                        <li key={appr.adminUid + appr.level} className="text-xs">
+                            <Badge variant="secondary" className="mr-1">Lvl {appr.level}</Badge> Approved by {appr.adminEmail} on {appr.approvedAt ? format(appr.approvedAt.toDate(), 'PPp') : 'Processing...'}
                         </li>
                     ))}
                     </ul>
@@ -311,7 +316,7 @@ export function RequestRow({ request }: RequestRowProps) {
 
         {canApprove && (
             <Button variant="ghost" size="icon" title="Approve" onClick={handleApprove} disabled={isSubmitting}>
-              <ThumbsUp className="h-4 w-4 text-green-500" />
+              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin text-green-500" /> : <ThumbsUp className="h-4 w-4 text-green-500" />}
             </Button>
         )}
 
@@ -353,7 +358,14 @@ export function RequestRow({ request }: RequestRowProps) {
             </DialogContent>
             </Dialog>
         )}
+         {request.status === "Fully Approved" && (
+            <Button variant="outline" size="icon" title="Print PDF" onClick={() => window.print()} className="ml-1">
+                <Printer className="h-4 w-4" />
+            </Button>
+        )}
       </TableCell>
     </TableRow>
   );
 }
+
+    

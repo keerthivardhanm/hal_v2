@@ -19,8 +19,9 @@ const StatusIcon = ({ status }: { status: ApprovalRequest["status"] }) => {
     case "Pending":
       return <Hourglass className="mr-2 h-5 w-5 text-yellow-500" />;
     case "Level 1 Approved":
+      return <ThumbsUp className="mr-2 h-5 w-5 text-sky-500" />;
     case "Level 2 Approved":
-      return <ThumbsUp className="mr-2 h-5 w-5 text-blue-500" />;
+      return <ThumbsUp className="mr-2 h-5 w-5 text-indigo-500" />;
     case "Fully Approved":
       return <CheckCircle2 className="mr-2 h-5 w-5 text-green-500" />;
     case "Rejected":
@@ -30,23 +31,45 @@ const StatusIcon = ({ status }: { status: ApprovalRequest["status"] }) => {
   }
 };
 
-const getStatusBadgeVariant = (status: ApprovalRequest["status"]) => {
+const getStatusBadgeVariant = (status: ApprovalRequest["status"]): "default" | "secondary" | "destructive" | "outline" => {
   switch (status) {
     case "Pending": return "secondary";
     case "Level 1 Approved": 
-    case "Level 2 Approved": return "default"; 
+    case "Level 2 Approved": 
     case "Fully Approved": return "default"; 
     case "Rejected": return "destructive";
     default: return "outline";
   }
 };
 
+const getStatusTextColor = (status: ApprovalRequest["status"]) => {
+  switch (status) {
+    case "Pending": return "text-yellow-600 dark:text-yellow-400";
+    case "Level 1 Approved": return "text-sky-600 dark:text-sky-400";
+    case "Level 2 Approved": return "text-indigo-600 dark:text-indigo-400";
+    case "Fully Approved": return "text-green-600 dark:text-green-400";
+    case "Rejected": return "text-red-600 dark:text-red-400"; // Matches destructive variant
+    default: return "text-gray-600 dark:text-gray-400";
+  }
+};
 
-export function ApprovalTracker({ request }: ApprovalRequestProps) {
+
+export function ApprovalTracker({ request }: ApprovalTrackerProps) {
   const handlePrintPdf = () => {
-    alert("PDF Print option functionality would be implemented here.");
+    // Placeholder: In a real app, this would generate and trigger a PDF download.
+    // For now, it uses the browser's print functionality.
+    toast({
+      title: "Print Initiated",
+      description: "Your browser's print dialog should appear. For actual PDF generation, further backend/library integration is needed.",
+    });
     window.print();
   };
+  
+  // Fallback for toast if not available (e.g. if this component is used outside a Toaster context, though unlikely here)
+  const toast = (typeof window !== 'undefined' && (window as any).toast) 
+    ? (window as any).toast 
+    : (options: {title: string, description: string}) => console.log("Toast:", options.title, options.description);
+
 
   return (
     <Card className="w-full max-w-3xl mx-auto shadow-xl">
@@ -57,7 +80,10 @@ export function ApprovalTracker({ request }: ApprovalRequestProps) {
         <CardDescription>
           Submitted on: {request.submittedAt ? format(request.submittedAt.toDate(), 'PPPp') : 'N/A'}
         </CardDescription>
-        <Badge variant={getStatusBadgeVariant(request.status)} className="w-fit text-sm px-3 py-1 mt-2">
+         <Badge 
+          variant={getStatusBadgeVariant(request.status)} 
+          className={`w-fit text-sm px-3 py-1 mt-2 ${getStatusTextColor(request.status)} ${getStatusBadgeVariant(request.status) === 'default' ? '' : `border-${getStatusTextColor(request.status).split('-')[1]}-500`}`}
+        >
           {request.status}
         </Badge>
       </CardHeader>
@@ -151,15 +177,15 @@ export function ApprovalTracker({ request }: ApprovalRequestProps) {
           </h3>
           {request.approvals && request.approvals.length > 0 ? (
             <ul className="space-y-3">
-              {request.approvals.map((approval, index) => (
-                <li key={index} className="flex items-start p-3 bg-muted/50 rounded-md">
+              {request.approvals.sort((a,b) => a.level - b.level).map((approval, index) => ( // Sort by level
+                <li key={approval.adminUid + approval.level} className="flex items-start p-3 bg-muted/50 rounded-md">
                   <ThumbsUp className="mr-3 h-5 w-5 text-green-500 mt-1 shrink-0" />
                   <div>
                     <p className="font-medium text-sm">
                       Level {approval.level} Approved by: <span className="font-normal text-muted-foreground">{approval.adminEmail}</span>
                     </p>
                     <p className="text-xs text-muted-foreground flex items-center">
-                      <CalendarDays className="mr-1 h-3 w-3" /> {format(approval.approvedAt.toDate(), 'PPPp')}
+                      <CalendarDays className="mr-1 h-3 w-3" /> {approval.approvedAt ? format(approval.approvedAt.toDate(), 'PPPp') : 'Processing...'}
                     </p>
                   </div>
                 </li>
@@ -190,3 +216,5 @@ export function ApprovalTracker({ request }: ApprovalRequestProps) {
     </Card>
   );
 }
+
+    
