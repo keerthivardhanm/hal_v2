@@ -113,28 +113,23 @@ body {
     display: none !important;
   }
   
-  /*
-    Make Radix UI Dialog Portals visible.
-    This specifically targets common attributes for Radix portals.
-  */
+  /* Make Radix UI Dialog Portals visible */
   body > div[data-radix-portal],
   body > div[data-radix-dialog-portal] {
     display: block !important;
     visibility: visible !important; /* Ensure the portal itself is visible */
   }
 
-  /*
-    Within the portal, hide everything except the DialogContent (role="dialog")
-    which contains our .printable-area.
-  */
+  /* Within the portal, hide everything except the DialogContent (role="dialog") */
   body > div[data-radix-portal] > *,
   body > div[data-radix-dialog-portal] > * {
     display: none !important;
   }
 
+  /* Make the DialogContent visible and style it for printing */
   body > div[data-radix-portal] > div[role="dialog"][data-state="open"],
   body > div[data-radix-dialog-portal] > div[role="dialog"][data-state="open"] {
-    display: block !important; /* Make the dialog content visible */
+    display: block !important; 
     visibility: visible !important;
     position: static !important; /* Override fixed positioning for print */
     width: 100% !important;
@@ -146,7 +141,7 @@ body {
     padding: 0 !important; /* Reset padding, rely on @page or .printable-area */
   }
   
-  /* The .printable-area IS the content of the dialog we want to print */
+  /* Style the .printable-area within the DialogContent for printing */
   .printable-area {
     display: block !important;
     visibility: visible !important;
@@ -158,6 +153,7 @@ body {
     background: white !important;
     font-size: 11pt; /* Adjust base font size for print if needed */
     border: none !important; /* Remove any border on the container itself */
+    font-family: serif; /* Ensure serif font for print if desired */
   }
 
   .printable-area * {
@@ -167,14 +163,15 @@ body {
     box-shadow: none !important;
     transform: none !important;
     filter: none !important;
+    font-family: serif; /* Ensure serif font for print if desired */
   }
   
   /* Hide known app shell components, overlays, and other non-print elements */
   header, footer, nav, aside, .no-print,
-  [data-radix-overlay], /* Dialog overlay */
-  button, /* Hide all buttons by default unless they are part of .printable-area and styled for print */
-  input,
-  textarea
+  [data-radix-overlay], /* Specifically hide Dialog overlay */
+  button:not(.printable-area button), /* Hide all buttons unless they are part of .printable-area and specifically styled for print */
+  input:not(.printable-area input),
+  textarea:not(.printable-area textarea)
    {
     display: none !important;
     visibility: hidden !important;
