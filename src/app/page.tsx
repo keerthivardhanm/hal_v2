@@ -16,7 +16,7 @@ function CTACard({ href, icon, title, description }: CTACardProps) {
     <Link href={href} className="group">
       <Card className="h-full transform-gpu overflow-hidden bg-card text-card-foreground shadow-lg transition-all duration-300 ease-in-out group-hover:scale-[1.03] group-hover:shadow-2xl dark:shadow-primary/10 dark:group-hover:shadow-primary/20">
         <CardHeader className="pb-4">
-          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors duration-300 group-hover:bg-primary group-hover:text-primary-foreground">
+          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
             {icon}
           </div>
           <CardTitle className="font-headline text-xl">{title}</CardTitle>
@@ -71,3 +71,4 @@ export default function HomePage() {
     </section>
   );
 }
+

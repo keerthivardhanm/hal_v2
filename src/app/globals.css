@@ -88,6 +88,14 @@ body {
   }
 }
 
+@layer components {
+  /* Add a general transition to anchor tags for smoother color changes */
+  a {
+    @apply transition-colors duration-200 ease-in-out;
+  }
+}
+
+
 @media print {
   html, body {
     width: 100%;
@@ -100,46 +108,76 @@ body {
     print-color-adjust: exact !important;
   }
 
-  /* Hide everything by default using visibility */
-  body * {
-    visibility: hidden !important;
+  /* Hide all direct children of body initially */
+  body > * {
+    display: none !important;
+  }
+  
+  /*
+    Make Radix UI Dialog Portals visible.
+    This specifically targets common attributes for Radix portals.
+  */
+  body > div[data-radix-portal],
+  body > div[data-radix-dialog-portal] {
+    display: block !important;
+    visibility: visible !important; /* Ensure the portal itself is visible */
   }
 
-  /* Make .printable-area and its descendants visible */
-  .printable-area,
-  .printable-area * {
+  /*
+    Within the portal, hide everything except the DialogContent (role="dialog")
+    which contains our .printable-area.
+  */
+  body > div[data-radix-portal] > *,
+  body > div[data-radix-dialog-portal] > * {
+    display: none !important;
+  }
+
+  body > div[data-radix-portal] > div[role="dialog"][data-state="open"],
+  body > div[data-radix-dialog-portal] > div[role="dialog"][data-state="open"] {
+    display: block !important; /* Make the dialog content visible */
     visibility: visible !important;
-    color: black !important;
-    background-color: transparent !important; /* Children backgrounds should be transparent */
+    position: static !important; /* Override fixed positioning for print */
+    width: 100% !important;
+    height: auto !important;
     box-shadow: none !important;
-    /* Ensure borders are solid if they exist in the letter, but override to black for print */
-    /* Use cautiously, may override intentional borders in ApprovalLetter */
-    /* border-style: solid !important;  */
-    /* border-color: black !important; */
-    transform: none !important; /* Reset any transforms that might affect print */
-    filter: none !important; /* Reset any filters */
+    border: none !important;
+    background: white !important;
+    overflow: visible !important; /* Allow content to flow */
+    padding: 0 !important; /* Reset padding, rely on @page or .printable-area */
   }
-
-  /* Ensure the printable area itself is styled for printing */
+  
+  /* The .printable-area IS the content of the dialog we want to print */
   .printable-area {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
-    width: 100% !important; /* Take full width of the page area */
-    height: auto !important; /* Allow content to define height */
+    display: block !important;
+    visibility: visible !important;
+    position: relative !important; /* Or static, but relative is fine here */
+    width: 100% !important;
+    height: auto !important;
     margin: 0 !important;
-    padding: 0 !important; /* Margins/padding for letter content are inside ApprovalLetter */
-    background: white !important; /* Ensure printable area itself has white background */
+    padding: 0 !important; /* Margins/padding for letter content are inside ApprovalLetter or @page */
+    background: white !important;
     font-size: 11pt; /* Adjust base font size for print if needed */
     border: none !important; /* Remove any border on the container itself */
   }
+
+  .printable-area * {
+    visibility: visible !important;
+    color: black !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    transform: none !important;
+    filter: none !important;
+  }
   
-  /* Explicitly hide known app shell components and overlays */
+  /* Hide known app shell components, overlays, and other non-print elements */
   header, footer, nav, aside, .no-print,
-  [data-radix-overlay] /* Hide dialog overlays specifically */
-  /* Do NOT hide [data-radix-portal] or [role="dialog"] here, as .printable-area is inside it */
+  [data-radix-overlay], /* Dialog overlay */
+  button, /* Hide all buttons by default unless they are part of .printable-area and styled for print */
+  input,
+  textarea
    {
-    display: none !important; /* Use display:none for things that should not occupy space */
+    display: none !important;
+    visibility: hidden !important;
   }
 
 
@@ -148,5 +186,4 @@ body {
     margin: 20mm; /* Standard A4 margins */
   }
 }
-
     
