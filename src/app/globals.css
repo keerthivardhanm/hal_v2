@@ -97,7 +97,7 @@ body {
 
 @media print {
   html, body {
-    width: 100%;
+    width: 100% !important;
     height: auto !important;
     background: white !important;
     color: black !important;
@@ -112,25 +112,32 @@ body {
     display: none !important;
     visibility: hidden !important;
   }
-
-  /* Make Radix Dialog Portals visible. These are typically direct children of body. */
+  
+  /* Make Radix Dialog Portals (which contain the dialog) visible */
+  /* This handles potential variations in Radix portal attribute names */
   body > div[data-radix-dialog-portal],
-  body > div[id^="radix-"] /* Fallback for potential ID-based portals */ {
+  body > div[data-radix-portal], /* More generic Radix portal */
+  body > div[id^="radix-"] /* Fallback for ID-based portals */ {
     display: block !important;
     visibility: visible !important;
     position: static !important; /* Ensure it's part of the normal flow for print */
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
   }
 
   /* Inside the portal, hide everything except the actual DialogContent */
   body > div[data-radix-dialog-portal] > *,
+  body > div[data-radix-portal] > *,
   body > div[id^="radix-"] > * {
     display: none !important;
     visibility: hidden !important;
   }
-
+  
   /* Make the DialogContent (the modal panel) visible and style it for printing */
   /* This targets the div[role="dialog"] that has data-state="open" */
   body > div[data-radix-dialog-portal] > div[role="dialog"][data-state="open"],
+  body > div[data-radix-portal] > div[role="dialog"][data-state="open"],
   body > div[id^="radix-"] > div[role="dialog"][data-state="open"] {
     display: block !important;
     visibility: visible !important;
