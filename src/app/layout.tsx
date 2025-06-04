@@ -1,3 +1,4 @@
+
 import type {Metadata} from 'next';
 import './globals.css';
 import { AuthProvider } from '@/contexts/AuthContext';
@@ -17,7 +18,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable}`}>
+    <html lang="en" className={`${inter.variable}`} suppressHydrationWarning={true}>
       <head>
         {/* Removed preconnect and Google Fonts link for Inter as next/font handles it */}
       </head>
