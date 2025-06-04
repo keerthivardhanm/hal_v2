@@ -114,9 +114,8 @@ body {
   }
 
   /* Make Radix Dialog Portals visible. These are typically direct children of body. */
-  /* Common selectors for Radix dialog portals */
   body > div[data-radix-dialog-portal],
-  body > div[id^="radix-"] /* Fallback for potential ID-based portals if Radix changes attributes */ {
+  body > div[id^="radix-"] /* Fallback for potential ID-based portals */ {
     display: block !important;
     visibility: visible !important;
     position: static !important; /* Ensure it's part of the normal flow for print */
@@ -146,7 +145,6 @@ body {
     background: white !important; /* Dialog background should be white */
     overflow: visible !important; /* Ensure content isn't clipped */
     font-size: 11pt; /* Base font size for print */
-    font-family: serif; /* Base font family for print */
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
@@ -163,7 +161,6 @@ body {
     width: 100% !important; /* Fill the dialog content area */
     box-sizing: border-box !important; /* Ensure padding is included in width */
     height: auto !important;
-    font-family: serif !important; /* Ensure serif font for print if desired */
     box-shadow: none !important;
     border: none !important;
     -webkit-print-color-adjust: exact !important;
