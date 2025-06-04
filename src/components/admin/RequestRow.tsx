@@ -163,9 +163,7 @@ export function RequestRow({ request }: RequestRowProps) {
   };
 
   const handleDownloadPdfFromPreview = () => {
-    // The CSS in globals.css will handle showing only the .printable-area
-    // The .printable-area class is now permanently on the div in the dialog.
-    setTimeout(() => { // Ensure DOM updates from dialog opening are flushed
+    setTimeout(() => {
         window.print();
     }, 250); 
   };
@@ -176,7 +174,7 @@ export function RequestRow({ request }: RequestRowProps) {
 
   return (
     <TableRow className="transition-colors hover:bg-muted/80">
-      <TableCell className="font-medium hidden md:table-cell">{request.id.substring(0, 8)}...</TableCell>
+      <TableCell className="font-medium hidden md:table-cell text-xs">{request.id}</TableCell>
       <TableCell>{request.submitterName}</TableCell>
       <TableCell className="hidden sm:table-cell">{request.submitterEmail}</TableCell>
       <TableCell className="hidden lg:table-cell">{request.submittedAt && request.submittedAt.toDate ? format(request.submittedAt.toDate(), "PP") : 'N/A'}</TableCell>
@@ -306,7 +304,6 @@ export function RequestRow({ request }: RequestRowProps) {
                     Review the letter below. Click "Download PDF" to print or save.
                   </DialogDescription>
                 </DialogHeader>
-                {/* The div below will be targeted by print CSS */}
                 <div className="printable-area p-6 max-h-[70vh] overflow-y-auto">
                   <ApprovalLetter request={request} />
                 </div>

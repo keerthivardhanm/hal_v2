@@ -75,7 +75,7 @@ export function AdminDashboard() {
               <TableCaption>A list of all approval requests.</TableCaption>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="hidden md:table-cell w-[100px]">Request ID</TableHead>
+                  <TableHead className="hidden md:table-cell min-w-[150px] text-xs">Request ID</TableHead>
                   <TableHead>Submitter</TableHead>
                   <TableHead className="hidden sm:table-cell">Email</TableHead>
                   <TableHead className="hidden lg:table-cell">Date</TableHead>
