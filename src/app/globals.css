@@ -115,19 +115,25 @@ body {
   }
 
   /* Make the Radix UI Dialog Portal itself visible */
-  body > div[data-radix-dialog-portal] {
+  /* Common selector for Radix dialog portals */
+  body > div[data-radix-dialog-portal],
+  body > div[id^="radix-"] /* Fallback for potential ID-based portals */ {
     display: block !important;
     visibility: visible !important;
+    position: static !important; /* Ensure it's part of the normal flow for print */
   }
 
   /* Inside the portal, hide everything except the actual DialogContent */
-  body > div[data-radix-dialog-portal] > * {
+  body > div[data-radix-dialog-portal] > *,
+  body > div[id^="radix-"] > * {
     display: none !important;
     visibility: hidden !important;
   }
 
   /* Make the DialogContent visible and style it for printing */
-  body > div[data-radix-dialog-portal] > div[role="dialog"][data-state="open"] {
+  /* This targets the div[role="dialog"] that has data-state="open" */
+  body > div[data-radix-dialog-portal] > div[role="dialog"][data-state="open"],
+  body > div[id^="radix-"] > div[role="dialog"][data-state="open"] {
     display: block !important;
     visibility: visible !important;
     position: static !important; /* Crucial: Override fixed/absolute positioning */
@@ -135,13 +141,15 @@ body {
     height: auto !important;
     max-width: none !important; /* Override screen max-width */
     margin: 0 !important;
-    padding: 0 !important;
+    padding: 0 !important; /* Padding will be handled by .printable-area or internally */
     border: none !important;
     box-shadow: none !important;
-    background: white !important;
+    background: white !important; /* Dialog background should be white */
     overflow: visible !important; /* Ensure content isn't clipped */
-    font-size: 11pt;
-    font-family: serif;
+    font-size: 11pt; /* Base font size for print */
+    font-family: serif; /* Base font family for print */
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   /* Style the .printable-area within the DialogContent for printing */
@@ -151,13 +159,16 @@ body {
     visibility: visible !important;
     background: white !important; /* Ensure white background for the letter area */
     color: black !important; /* Ensure black text for the letter area */
-    padding: 0 !important; /* Margins/padding are handled by @page or letter's internal padding */
+    padding: 20mm !important; /* Apply A4-like padding here if margins in @page don't work well with dialogs */
     margin: 0 !important;
-    width: 100% !important;
+    width: 100% !important; /* Fill the dialog content area */
+    box-sizing: border-box !important; /* Ensure padding is included in width */
     height: auto !important;
-    font-family: serif; /* Ensure serif font for print if desired */
+    font-family: serif !important; /* Ensure serif font for print if desired */
     box-shadow: none !important;
     border: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   /* Force all children of .printable-area to be visible and correctly styled */
@@ -173,11 +184,12 @@ body {
     font-family: serif !important; /* Force serif for all text within */
   }
   
-  /* Explicitly hide known non-print elements, including dialog overlays */
+  /* Explicitly hide known non-print elements, including dialog overlays and other UI */
   header, footer, nav, aside, .no-print,
   [data-radix-overlay], /* Radix Dialog Overlay */
   div[data-radix-focus-guard], /* Radix Focus Guards */
-  button:not(.printable-area button), /* Hide buttons not in printable area */
+  /* Hide buttons/inputs NOT inside the .printable-area to avoid printing dialog buttons etc. */
+  button:not(.printable-area button), 
   input:not(.printable-area input),
   textarea:not(.printable-area textarea) {
     display: none !important;
@@ -186,6 +198,8 @@ body {
 
   @page {
     size: A4;
-    margin: 20mm; /* Standard A4 margins */
+    margin: 0mm; /* Margins are handled by .printable-area's padding or can be set here */
+     /* It's often better to set margins to 0 and control padding inside .printable-area */
   }
 }
+
