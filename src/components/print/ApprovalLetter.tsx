@@ -8,6 +8,22 @@ interface ApprovalLetterProps {
   request: ApprovalRequest;
 }
 
+// Helper function to parse item string for quantity and name
+function parseItemString(itemStr: string): { name: string; quantity: number } {
+  const cleanedStr = itemStr.trim();
+  // Try to match "N item(s)" e.g. "2 Laptops", "1 Mobile"
+  const specificMatch = cleanedStr.match(/^(\d+)\s+(.+)/);
+  if (specificMatch && specificMatch[1] && specificMatch[2]) {
+    const quantity = parseInt(specificMatch[1], 10);
+    if (!isNaN(quantity) && quantity > 0) {
+      return { name: specificMatch[2].trim(), quantity };
+    }
+  }
+  // If no leading number or invalid number, assume quantity is 1
+  return { name: cleanedStr, quantity: 1 };
+}
+
+
 export function ApprovalLetter({ request }: ApprovalLetterProps) {
   const today = format(new Date(), "dd-MM-yyyy");
   const eventDate = request.requestDate
@@ -17,9 +33,9 @@ export function ApprovalLetter({ request }: ApprovalLetterProps) {
     ? format(request.submittedAt.toDate(), "dd-MM-yyyy 'at' HH:mm")
     : "N/A";
 
-  const approverGM = request.approvals.find((a) => a.level === 1); // Assuming GM is Level 1
-  const approverDGM = request.approvals.find((a) => a.level === 2); // Assuming DGM is Level 2
-  const approverSM = request.approvals.find((a) => a.level === 3); // Assuming SM is Level 3
+  const approverGM = request.approvals.find((a) => a.level === 1);
+  const approverDGM = request.approvals.find((a) => a.level === 2);
+  const approverSM = request.approvals.find((a) => a.level === 3);
 
 
   return (
@@ -57,7 +73,7 @@ export function ApprovalLetter({ request }: ApprovalLetterProps) {
         <p className="mb-1"><strong>Purpose of Visit:</strong> {request.purpose}</p>
         <p><strong>Requested Date for Visit:</strong> {eventDate}</p>
         <p><strong>Requested Time for Visit:</strong> {request.requestTime}</p>
-        <p><strong>Number of Items:</strong> {request.numberOfItems}</p>
+        <p><strong>Number of Items (User Declared Total):</strong> {request.numberOfItems}</p>
       </section>
 
       <section className="mb-4">
@@ -86,40 +102,27 @@ export function ApprovalLetter({ request }: ApprovalLetterProps) {
           </thead>
           <tbody>
             {request.finalSelectedGadgets.length > 0 ? (
-              request.finalSelectedGadgets.map((gadget, index) => (
-                <tr key={index}>
-                  <td className="border border-black p-1 text-center h-8">
-                    {index === 0 ? request.numberOfItems : ""}
-                  </td>
-                  <td className="border border-black p-1 h-8">
-                    {gadget} (Serial No. _________________)
-                  </td>
-                  <td className="border border-black p-1 h-8 text-center">_________________</td>
-                  <td className="border border-black p-1 text-center h-8">
-                    {request.submitterName}
-                  </td>
-                </tr>
-              ))
+              request.finalSelectedGadgets.map((gadgetStr, index) => {
+                const { name: itemName, quantity: itemQuantity } = parseItemString(gadgetStr);
+                return (
+                  <tr key={index}>
+                    <td className="border border-black p-1 text-center h-8">
+                      {itemQuantity}
+                    </td>
+                    <td className="border border-black p-1 h-8">
+                      {itemName} (Serial No. _________________)
+                    </td>
+                    <td className="border border-black p-1 h-8 text-center">_________________</td>
+                    <td className="border border-black p-1 text-center h-8">
+                      {request.submitterName}
+                    </td>
+                  </tr>
+                );
+              })
             ) : (
               <tr>
                 <td colSpan={4} className="border border-black p-1 text-center h-8">No gadgets specified.</td>
               </tr>
-            )}
-             {request.finalSelectedGadgets.some(g => g.toLowerCase().includes("adaptor") || g.toLowerCase().includes("console cable")) && (
-                 <tr>
-                    <td className="border border-black p-1 text-center h-8"></td>
-                    <td className="border border-black p-1 h-8">Adaptor & console cable-1</td>
-                    <td className="border border-black p-1 h-8 text-center">Smart Phone</td>
-                    <td className="border border-black p-1 text-center h-8">{request.submitterName}</td>
-                </tr>
-            )}
-             {request.finalSelectedGadgets.some(g => g.toLowerCase().includes("tool kit")) && (
-                 <tr>
-                    <td className="border border-black p-1 text-center h-8"></td>
-                    <td className="border border-black p-1 h-8">Tool kit- 1 set</td>
-                    <td className="border border-black p-1 h-8 text-center"></td>
-                    <td className="border border-black p-1 text-center h-8">{request.submitterName}</td>
-                </tr>
             )}
           </tbody>
         </table>
@@ -168,3 +171,4 @@ export function ApprovalLetter({ request }: ApprovalLetterProps) {
     </div>
   );
 }
+
