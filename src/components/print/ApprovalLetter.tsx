@@ -3,6 +3,7 @@
 
 import type { ApprovalRequest } from "@/types";
 import { format } from "date-fns";
+import { useState, useEffect } from "react";
 
 interface ApprovalLetterProps {
   request: ApprovalRequest;
@@ -25,7 +26,12 @@ function parseItemString(itemStr: string): { name: string; quantity: number } {
 
 
 export function ApprovalLetter({ request }: ApprovalLetterProps) {
-  const today = format(new Date(), "dd-MM-yyyy");
+  const [currentDate, setCurrentDate] = useState("");
+
+  useEffect(() => {
+    setCurrentDate(format(new Date(), "dd-MM-yyyy"));
+  }, []);
+
   const eventDate = request.requestDate
     ? format(request.requestDate.toDate(), "dd-MM-yyyy")
     : "N/A";
@@ -47,7 +53,7 @@ export function ApprovalLetter({ request }: ApprovalLetterProps) {
         <div className="text-right">
           <p className="font-bold">OVERHAUL DIVISION</p>
           <p>HAL(BC)</p>
-          <p>{today}</p>
+          <p>{currentDate || "Loading date..."}</p>
         </div>
       </header>
 
@@ -171,4 +177,3 @@ export function ApprovalLetter({ request }: ApprovalLetterProps) {
     </div>
   );
 }
-

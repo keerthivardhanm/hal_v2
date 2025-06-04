@@ -1,4 +1,6 @@
 
+"use client"; // Required for useState and useEffect
+
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FilePlus2, Search, UserCog, ArrowRight } from 'lucide-react';
@@ -71,4 +73,3 @@ export default function HomePage() {
     </section>
   );
 }
-
