@@ -56,9 +56,9 @@ const formSchema = z.object({
     smartwatch: z.boolean().optional(),
     camera: z.boolean().optional(),
     others: z.boolean().optional(),
-  }).refine(value => value.mobile || value.laptop || value.pendrive || value.tablet || value.smartwatch || value.camera || value.others, {
+  }).refine(value => Object.values(value).some(v => v === true), { // Checks if at least one gadget or 'others' is true
     message: "You must select at least one gadget type.",
-    path: ["mobile"], 
+    path: ["gadgets"], 
   }),
   otherGadgetName: z.string().optional(),
 }).refine(data => {
@@ -333,7 +333,7 @@ export function SubmissionForm() {
                   )}
                 />
               </div>
-              <FormMessage>{form.formState.errors.gadgets?.message}</FormMessage>
+              <FormMessage>{form.formState.errors.gadgets?.message || form.formState.errors.gadgets?.root?.message}</FormMessage>
             </FormItem>
 
             {watchGadgetsOthers && (

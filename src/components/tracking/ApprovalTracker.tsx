@@ -89,17 +89,11 @@ export function ApprovalTracker({ request }: ApprovalTrackerProps) {
   };
 
   const handleDownloadPdfFromPreview = () => {
-    const letterPreviewElement = document.getElementById('approval-letter-in-dialog-tracker');
-    if (letterPreviewElement) {
-      letterPreviewElement.classList.add('printable-area');
-      window.print();
-      // Delay removal to ensure print dialog has processed
-      setTimeout(() => {
-        letterPreviewElement.classList.remove('printable-area');
-      }, 500);
-    } else {
-       toast({ variant: "destructive", title: "Preview Error", description: "Could not find letter content to print." });
-    }
+    // The CSS in globals.css will handle showing only the .printable-area
+    // The .printable-area class is now permanently on the div in the dialog.
+     setTimeout(() => { // Ensure DOM updates from dialog opening are flushed
+        window.print();
+    }, 250);
   };
   
 
@@ -262,7 +256,8 @@ export function ApprovalTracker({ request }: ApprovalTrackerProps) {
                         Review the letter below. Click "Download PDF" to print or save.
                       </DialogDescription>
                     </DialogHeader>
-                    <div id="approval-letter-in-dialog-tracker" className="p-6 max-h-[70vh] overflow-y-auto">
+                     {/* The div below will be targeted by print CSS */}
+                    <div className="printable-area p-6 max-h-[70vh] overflow-y-auto">
                       <ApprovalLetter request={request} />
                     </div>
                     <DialogFooter className="p-6 pt-0">

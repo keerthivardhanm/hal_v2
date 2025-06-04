@@ -95,7 +95,6 @@ body {
   }
 }
 
-
 @media print {
   html, body {
     width: 100%;
@@ -108,16 +107,16 @@ body {
     print-color-adjust: exact !important;
   }
 
-  /* Hide everything on the page by default for printing */
+  /* Hide everything on the page by default */
   body > * {
     display: none !important;
     visibility: hidden !important;
   }
 
-  /* Make the Radix UI Dialog Portal itself visible */
-  /* Common selector for Radix dialog portals */
+  /* Make Radix Dialog Portals visible. These are typically direct children of body. */
+  /* Common selectors for Radix dialog portals */
   body > div[data-radix-dialog-portal],
-  body > div[id^="radix-"] /* Fallback for potential ID-based portals */ {
+  body > div[id^="radix-"] /* Fallback for potential ID-based portals if Radix changes attributes */ {
     display: block !important;
     visibility: visible !important;
     position: static !important; /* Ensure it's part of the normal flow for print */
@@ -130,13 +129,13 @@ body {
     visibility: hidden !important;
   }
 
-  /* Make the DialogContent visible and style it for printing */
+  /* Make the DialogContent (the modal panel) visible and style it for printing */
   /* This targets the div[role="dialog"] that has data-state="open" */
   body > div[data-radix-dialog-portal] > div[role="dialog"][data-state="open"],
   body > div[id^="radix-"] > div[role="dialog"][data-state="open"] {
     display: block !important;
     visibility: visible !important;
-    position: static !important; /* Crucial: Override fixed/absolute positioning */
+    position: static !important; /* CRUCIAL: Override fixed/absolute positioning */
     width: 100% !important;
     height: auto !important;
     max-width: none !important; /* Override screen max-width */
@@ -159,7 +158,7 @@ body {
     visibility: visible !important;
     background: white !important; /* Ensure white background for the letter area */
     color: black !important; /* Ensure black text for the letter area */
-    padding: 20mm !important; /* Apply A4-like padding here if margins in @page don't work well with dialogs */
+    padding: 20mm !important; /* A4-like padding handled here */
     margin: 0 !important;
     width: 100% !important; /* Fill the dialog content area */
     box-sizing: border-box !important; /* Ensure padding is included in width */
@@ -170,7 +169,7 @@ body {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
-
+  
   /* Force all children of .printable-area to be visible and correctly styled */
   .printable-area *, .printable-area *:before, .printable-area *:after {
     visibility: visible !important;
@@ -182,6 +181,9 @@ body {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     font-family: serif !important; /* Force serif for all text within */
+    /* Reset transforms or filters that might hide elements */
+    transform: none !important;
+    filter: none !important;
   }
   
   /* Explicitly hide known non-print elements, including dialog overlays and other UI */
@@ -198,8 +200,6 @@ body {
 
   @page {
     size: A4;
-    margin: 0mm; /* Margins are handled by .printable-area's padding or can be set here */
-     /* It's often better to set margins to 0 and control padding inside .printable-area */
+    margin: 0mm; /* Margins are controlled by .printable-area's padding */
   }
 }
-

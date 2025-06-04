@@ -163,16 +163,11 @@ export function RequestRow({ request }: RequestRowProps) {
   };
 
   const handleDownloadPdfFromPreview = () => {
-    const letterPreviewElement = document.getElementById('approval-letter-in-dialog-admin');
-    if (letterPreviewElement) {
-      letterPreviewElement.classList.add('printable-area');
-      window.print();
-      setTimeout(() => {
-        letterPreviewElement.classList.remove('printable-area');
-      }, 250); // Increased delay
-    } else {
-       toast({ variant: "destructive", title: "Preview Error", description: "Could not find letter content to print." });
-    }
+    // The CSS in globals.css will handle showing only the .printable-area
+    // The .printable-area class is now permanently on the div in the dialog.
+    setTimeout(() => { // Ensure DOM updates from dialog opening are flushed
+        window.print();
+    }, 250); 
   };
 
   const canApprove = request.status !== "Fully Approved" && request.status !== "Rejected" && !request.approvals.find(appr => appr.adminUid === currentUser?.uid) && request.approvals.length < 3;
@@ -311,7 +306,8 @@ export function RequestRow({ request }: RequestRowProps) {
                     Review the letter below. Click "Download PDF" to print or save.
                   </DialogDescription>
                 </DialogHeader>
-                <div id="approval-letter-in-dialog-admin" className="p-6 max-h-[70vh] overflow-y-auto">
+                {/* The div below will be targeted by print CSS */}
+                <div className="printable-area p-6 max-h-[70vh] overflow-y-auto">
                   <ApprovalLetter request={request} />
                 </div>
                 <DialogFooter className="p-6 pt-0">
