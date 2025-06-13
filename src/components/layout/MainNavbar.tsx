@@ -2,6 +2,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, Send, Search, UserCircle } from "lucide-react";
@@ -24,7 +25,7 @@ export function MainNavbar() {
   };
 
   const navLinks = [
-    { href: "/", label: "Home" },
+    // { href: "/", label: "Home" }, // Removed Home link
     { href: "/submit", label: "New Request", icon: <Send className="mr-2 h-4 w-4" /> },
     { href: "/track", label: "Track Request", icon: <Search className="mr-2 h-4 w-4" /> },
   ];
@@ -33,8 +34,15 @@ export function MainNavbar() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
         <Link href="/" className="mr-6 flex items-center space-x-2">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" className="h-6 w-6 text-primary"><rect width="256" height="256" fill="none"></rect><path d="M M208,80H168a8,8,0,0,0-8,8v80a8,8,0,0,0,8,8h40a8,8,0,0,0,8-8V88A8,8,0,0,0,208,80ZM48,80H88a8,8,0,0,1,8,8v80a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V88A8,8,0,0,1,48,80ZM160,96V88H48v8Zm48,0V88H104v8Zm0,16H104v8h96Zm-48,0H48v8h56Zm48,16H104v8h96Zm-48,0H48v8h56Zm48,16H104v8h96Zm-48,0H48v8h56Zm40,32H168V88h.8L152,128l-16.8-40H160V72a16,16,0,0,0-16-16H48A16,16,0,0,0,32,72v96a16,16,0,0,0,16,16h72a16,16,0,0,0,13.1-6.8l12.8-20.1,12.8,20.1A16,16,0,0,0,168,184h40a16,16,0,0,0,16-16V88A16,16,0,0,0,208,72H160" fill="currentColor"></path></svg>
-          <span className="font-bold sm:inline-block font-headline text-xl">ApprovalFlow</span>
+          <Image
+            src="https://hal-india.co.in/assets/images/logo.png"
+            alt="HAL India Logo - Home"
+            width={180}
+            height={56}
+            className="h-10 w-auto object-contain bg-white p-1 rounded"
+            priority
+          />
+          <span className="font-bold sm:inline-block font-headline text-xl">HAL-India</span>
         </Link>
         <nav className="hidden md:flex items-center space-x-1">
           {navLinks.map(link => (
@@ -69,8 +77,15 @@ export function MainNavbar() {
             </SheetTrigger>
             <SheetContent side="left" className="pr-0">
               <Link href="/" className="mb-4 flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" className="mr-2 h-6 w-6 text-primary"><rect width="256" height="256" fill="none"></rect><path d="M208,80H168a8,8,0,0,0-8,8v80a8,8,0,0,0,8,8h40a8,8,0,0,0,8-8V88A8,8,0,0,0,208,80ZM48,80H88a8,8,0,0,1,8,8v80a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V88A8,8,0,0,1,48,80ZM160,96V88H48v8Zm48,0V88H104v8Zm0,16H104v8h96Zm-48,0H48v8h56Zm48,16H104v8h96Zm-48,0H48v8h56Zm48,16H104v8h96Zm-48,0H48v8h56Zm40,32H168V88h.8L152,128l-16.8-40H160V72a16,16,0,0,0-16-16H48A16,16,0,0,0,32,72v96a16,16,0,0,0,16,16h72a16,16,0,0,0,13.1-6.8l12.8-20.1,12.8,20.1A16,16,0,0,0,168,184h40a16,16,0,0,0,16-16V88A16,16,0,0,0,208,72H160" fill="currentColor"></path></svg>
-                <span className="font-bold font-headline">ApprovalFlow</span>
+                 <Image
+                    src="https://hal-india.co.in/assets/images/logo.png"
+                    alt="HAL India Logo - Home"
+                    width={180}
+                    height={56}
+                    className="h-10 w-auto object-contain bg-white p-1 rounded mr-2"
+                    priority
+                  />
+                <span className="font-bold font-headline">HAL-India</span>
               </Link>
               <div className="flex flex-col space-y-2">
                 {navLinks.map(link => (

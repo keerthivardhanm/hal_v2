@@ -1,7 +1,8 @@
 
-"use client"; // Required for useState and useEffect
+"use client"; 
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FilePlus2, Search, UserCog, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -42,7 +43,7 @@ export default function HomePage() {
       <div className="container px-4 md:px-6">
         <div className="mx-auto mb-12 max-w-3xl text-center">
           <h1 className="text-4xl font-bold tracking-tighter text-foreground sm:text-5xl md:text-6xl font-headline">
-            Welcome to ApprovalFlow
+            Welcome To HAL
           </h1>
           <p className="mt-4 text-lg text-muted-foreground md:text-xl">
             Your streamlined solution for managing approval requests. Get started below.
