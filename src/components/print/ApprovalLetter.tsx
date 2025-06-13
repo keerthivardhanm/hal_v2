@@ -4,6 +4,7 @@
 import type { ApprovalRequest } from "@/types";
 import { format } from "date-fns";
 import { useState, useEffect } from "react";
+import Image from 'next/image'; // Import next/image
 
 interface ApprovalLetterProps {
   request: ApprovalRequest;
@@ -12,7 +13,6 @@ interface ApprovalLetterProps {
 // Helper function to parse item string for quantity and name
 function parseItemString(itemStr: string): { name: string; quantity: number } {
   const cleanedStr = itemStr.trim();
-  // Try to match "N item(s)" e.g. "2 Laptops", "1 Mobile"
   const specificMatch = cleanedStr.match(/^(\d+)\s+(.+)/);
   if (specificMatch && specificMatch[1] && specificMatch[2]) {
     const quantity = parseInt(specificMatch[1], 10);
@@ -20,7 +20,6 @@ function parseItemString(itemStr: string): { name: string; quantity: number } {
       return { name: specificMatch[2].trim(), quantity };
     }
   }
-  // If no leading number or invalid number, assume quantity is 1
   return { name: cleanedStr, quantity: 1 };
 }
 
@@ -39,141 +38,186 @@ export function ApprovalLetter({ request }: ApprovalLetterProps) {
     ? format(request.submittedAt.toDate(), "dd-MM-yyyy 'at' HH:mm")
     : "N/A";
 
-  const approverGM = request.approvals.find((a) => a.level === 1);
+  const approverGM = request.approvals.find((a) => a.level === 3); // Assuming GM is level 3
   const approverDGM = request.approvals.find((a) => a.level === 2);
-  const approverSM = request.approvals.find((a) => a.level === 3);
+  const approverSM = request.approvals.find((a) => a.level === 1); // Assuming SM is level 1
+
+  const gadgetsString = request.finalSelectedGadgets.join(", ").toUpperCase();
+
+  const MAX_TABLE_ROWS = 4;
+  const gadgetRows = Array.from({ length: MAX_TABLE_ROWS }, (_, i) => {
+    if (i < request.finalSelectedGadgets.length) {
+      const parsedItem = parseItemString(request.finalSelectedGadgets[i]);
+      return {
+        slNo: i + 1,
+        noOfItems: parsedItem.quantity,
+        modelSerial: parsedItem.name + " (Serial No. _______________)",
+        make: "_________________",
+        personCarrying: request.submitterName,
+      };
+    }
+    return { slNo: i + 1, noOfItems: "", modelSerial: "", make: "", personCarrying: "" }; // Blank row
+  });
 
 
   return (
-    <div className="p-8 bg-white text-black font-serif text-xs print-letter-container">
-      <header className="flex justify-between items-start mb-6">
-        <div>
-          <p className="font-bold">OFFICE OF DGM (IT)</p>
+    <div
+      className="print-letter-container bg-white text-black"
+      style={{
+        width: "794px", // A4 width at 96 DPI
+        minHeight: "1123px", // A4 height
+        padding: "40px",
+        fontSize: "12px",
+        lineHeight: "1.6",
+        fontFamily: "serif",
+        margin: "0 auto",
+        boxSizing: "border-box",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <header
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          marginBottom: "20px",
+          paddingBottom: "10px",
+          borderBottom: "1px solid black",
+        }}
+      >
+        <div style={{ flexShrink: 0 }}>
+          <img // Use standard img tag for html2canvas compatibility with external URLs if CORS is an issue, or ensure next.config.js allows domain for next/image
+            src="https://hal-india.co.in/assets/images/logo.png"
+            alt="HAL India Logo"
+            style={{ maxHeight: "60px", objectFit: "contain", marginBottom: "10px" }}
+          />
         </div>
-        <div className="text-right">
-          <p className="font-bold">OVERHAUL DIVISION</p>
-          <p>HAL(BC)</p>
-          <p>{currentDate || "Loading date..."}</p>
+        <div style={{ textAlign: "center", flexGrow: 1 }}>
+          <p style={{ fontWeight: "bold", textTransform: "uppercase", fontSize: "14px", margin: 0 }}>
+            OFFICE OF DGM (IT)
+          </p>
+        </div>
+        <div style={{ textAlign: "right", minWidth: "150px" }}>
+          <p style={{ fontWeight: "bold", margin: 0 }}>OVERHAUL DIVISION</p>
+          <p style={{ margin: 0 }}>HAL(BC)</p>
+          <p style={{ margin: 0 }}>{currentDate || "Loading date..."}</p>
         </div>
       </header>
 
-      <section className="mb-4 border-b border-black pb-2">
-        <h2 className="font-bold text-center text-sm underline mb-2">APPROVAL REQUEST OVERVIEW</h2>
-        <div className="grid grid-cols-2 gap-x-4">
-          <p><strong>Tracking ID:</strong> {request.id}</p>
-          <p><strong>Current Status:</strong> {request.status}</p>
+      <section style={{ marginBottom: "15px", borderBottom: "1px solid black", paddingBottom: "10px" }}>
+        <h2 style={{ fontWeight: "bold", textAlign: "center", fontSize: "13px", textDecoration: "underline", marginBottom: "10px" }}>
+          REQUEST OVERVIEW
+        </h2>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "5px 20px" }}>
+          <p><strong>Requester Name:</strong> {request.submitterName}</p>
+          <p><strong>Department:</strong> {request.organisationName}</p>
+          <p><strong>Email:</strong> {request.submitterEmail}</p>
+          <p><strong>Purpose:</strong> {request.purpose.substring(0,50)}{request.purpose.length > 50 ? '...' : ''}</p>
+          <p><strong>Submitted At:</strong> {submittedAtDate}</p>
+          <p><strong>Visit To:</strong> HAL Overhaul Division</p>
         </div>
       </section>
-      
-      <section className="mb-4 border-b border-black pb-2">
-         <h3 className="font-bold text-sm mb-1">Submitter Information:</h3>
-        <p><strong>Name:</strong> {request.submitterName}</p>
-        <p><strong>Email:</strong> {request.submitterEmail}</p>
-        <p><strong>Organisation:</strong> {request.organisationName}</p>
-        <p><strong>ID No:</strong> {request.submitterIdNo}</p>
-        <p><strong>Submitted At:</strong> {submittedAtDate}</p>
-      </section>
 
-      <section className="mb-4 border-b border-black pb-2">
-        <h3 className="font-bold text-sm mb-1">Request Details:</h3>
-        <p className="mb-1"><strong>Purpose of Visit:</strong> {request.purpose}</p>
-        <p><strong>Requested Date for Visit:</strong> {eventDate}</p>
-        <p><strong>Requested Time for Visit:</strong> {request.requestTime}</p>
-        <p><strong>Number of Items (User Declared Total):</strong> {request.numberOfItems}</p>
-      </section>
-
-      <section className="mb-4">
-        <p className="mb-1">TO CM(SECURITY)-O</p>
-        <p className="font-bold mb-2">
-          SUB: PERMISSION FOR {request.finalSelectedGadgets.join(", ").toUpperCase()} TO BRING INSIDE OVERHAUL DIVISION
+      <section style={{ marginBottom: "15px" }}>
+        <h3 style={{ fontWeight: "bold", fontSize: "13px" }}>Request Details:</h3>
+        <p style={{ marginBottom: "5px" }}>
+          <strong>Requested Date for Visit:</strong> {eventDate} at {request.requestTime}
         </p>
-        <p className="mb-2 leading-relaxed">
+        <p style={{ marginBottom: "5px" }}><strong>TO CM(SECURITY)-O</strong></p>
+        <p style={{ fontWeight: "bold", marginBottom: "5px" }}>
+          SUB: PERMISSION FOR CARRYING GADGETS - {gadgetsString}
+        </p>
+        <p style={{ lineHeight: "1.5" }}>
           Mr/Mrs {request.submitterName} from {request.organisationName} (Overhaul Division) is visiting
           HAL on {eventDate} at {request.requestTime} for {request.purpose}. In this
-          connection, He/She may be allowed to carry {request.finalSelectedGadgets.join(", ")}
-          {" "}as per the details given below.
+          connection, He/She may be allowed to carry the below mentioned items.
         </p>
       </section>
 
-      <section className="mb-4">
-        <h2 className="font-bold text-center mb-2 text-sm underline">MOBILE & LAPTOP DETAILS</h2>
-        <table className="w-full border-collapse border border-black text-xs">
+      <section style={{ marginBottom: "20px" }}>
+        <h2 style={{ fontWeight: "bold", textAlign: "center", marginBottom: "10px", fontSize: "13px", textDecoration: "underline" }}>
+          MOBILE & LAPTOP DETAILS
+        </h2>
+        <table
+          style={{
+            width: "100%",
+            borderCollapse: "collapse",
+            tableLayout: "fixed",
+            fontSize: "11px", // Slightly smaller for table content
+          }}
+        >
           <thead>
             <tr>
-              <th className="border border-black p-1 font-bold w-[15%]">No.of items</th>
-              <th className="border border-black p-1 font-bold w-[40%]">Model Number & Serial No.</th>
-              <th className="border border-black p-1 font-bold w-[20%]">MAKE</th>
-              <th className="border border-black p-1 font-bold w-[25%]">Name of the Person Carrying</th>
+              <th style={{ width: "10%", border: "1px solid black", padding: "4px", fontWeight: "bold", textAlign: "center" }}>Sl. No.</th>
+              <th style={{ width: "10%", border: "1px solid black", padding: "4px", fontWeight: "bold", textAlign: "center" }}>No. of items</th>
+              <th style={{ width: "35%", border: "1px solid black", padding: "4px", fontWeight: "bold", textAlign: "center" }}>Model Number & Serial No.</th>
+              <th style={{ width: "20%", border: "1px solid black", padding: "4px", fontWeight: "bold", textAlign: "center" }}>MAKE</th>
+              <th style={{ width: "25%", border: "1px solid black", padding: "4px", fontWeight: "bold", textAlign: "center" }}>Name of the Person Carrying</th>
             </tr>
           </thead>
           <tbody>
-            {request.finalSelectedGadgets.length > 0 ? (
-              request.finalSelectedGadgets.map((gadgetStr, index) => {
-                const { name: itemName, quantity: itemQuantity } = parseItemString(gadgetStr);
-                return (
-                  <tr key={index}>
-                    <td className="border border-black p-1 text-center h-8">
-                      {itemQuantity}
-                    </td>
-                    <td className="border border-black p-1 h-8">
-                      {itemName} (Serial No. _________________)
-                    </td>
-                    <td className="border border-black p-1 h-8 text-center">_________________</td>
-                    <td className="border border-black p-1 text-center h-8">
-                      {request.submitterName}
-                    </td>
-                  </tr>
-                );
-              })
-            ) : (
-              <tr>
-                <td colSpan={4} className="border border-black p-1 text-center h-8">No gadgets specified.</td>
+            {gadgetRows.map((gadget, index) => (
+              <tr key={index}>
+                <td style={{ border: "1px solid black", padding: "4px", textAlign: "center", height: "35px" }}>{gadget.slNo && index < request.finalSelectedGadgets.length ? gadget.slNo : index + 1}</td>
+                <td style={{ border: "1px solid black", padding: "4px", textAlign: "center", height: "35px" }}>{gadget.noOfItems}</td>
+                <td style={{ border: "1px solid black", padding: "4px", height: "35px" }}>{gadget.modelSerial}</td>
+                <td style={{ border: "1px solid black", padding: "4px", textAlign: "center", height: "35px" }}>{gadget.make}</td>
+                <td style={{ border: "1px solid black", padding: "4px", textAlign: "center", height: "35px" }}>{index < request.finalSelectedGadgets.length ? gadget.personCarrying : ""}</td>
               </tr>
-            )}
+            ))}
           </tbody>
         </table>
       </section>
-      
-      <section className="mb-4 border-t border-black pt-2">
-        <h3 className="font-bold text-sm mb-1 underline">Approval Log:</h3>
+
+      <section style={{ marginBottom: "15px", borderTop: "1px solid black", paddingTop: "10px" }}>
+        <h3 style={{ fontWeight: "bold", fontSize: "13px", textDecoration: "underline", marginBottom: "5px" }}>Approval Log:</h3>
         {request.approvals.length > 0 ? (
-          <ul className="list-disc list-inside pl-2 space-y-1 text-xs">
+          <ul style={{ listStylePosition: "inside", paddingLeft: "5px", margin: 0 }}>
             {request.approvals.sort((a, b) => a.level - b.level).map(appr => (
-              <li key={appr.adminUid + appr.level}>
-                Level {appr.level} Approved by {appr.adminEmail} on {appr.approvedAt && appr.approvedAt.toDate ? format(appr.approvedAt.toDate(), 'PPp') : 'Processing...'}
+              <li key={appr.adminUid + appr.level} style={{ fontSize: "11px", marginBottom: "3px" }}>
+                Level {appr.level} Approved by {appr.adminEmail} on {appr.approvedAt && appr.approvedAt.toDate ? format(appr.approvedAt.toDate(), 'dd-MM-yyyy') : 'Processing...'}
               </li>
             ))}
           </ul>
         ) : (
-          <p className="text-xs">No approvals recorded yet.</p>
+          <p style={{ fontSize: "11px" }}>No approvals recorded yet.</p>
         )}
       </section>
 
       {request.isRejected && request.rejectionReason && (
-        <section className="mb-4 border-t border-black pt-2">
-          <h3 className="font-bold text-sm mb-1 underline text-red-600">Rejection Information:</h3>
-          <p className="text-xs text-red-600"><strong>Reason:</strong> {request.rejectionReason}</p>
+        <section style={{ marginBottom: "15px", borderTop: "1px solid black", paddingTop: "10px", color: "red" }}>
+          <h3 style={{ fontWeight: "bold", fontSize: "13px", textDecoration: "underline", marginBottom: "5px" }}>Rejection Information:</h3>
+          <p style={{ fontSize: "11px" }}><strong>Reason:</strong> {request.rejectionReason}</p>
         </section>
       )}
 
-      <section className="my-6">
-        <p className="font-bold">NOTE: Camera is to be blocked</p>
-      </section>
+      <section style={{ marginTop: "auto", paddingTop:"20px" }}> {/* Pushes footer to bottom */}
+        <div style={{ marginBottom: "20px" }}>
+            <p style={{ fontWeight: "bold", margin: 0 }}>NOTE: Camera is to be blocked.</p>
+        </div>
+        
+        {request.status === "Fully Approved" && (
+            <div style={{ border: "2px solid green", padding: "10px", textAlign: "center", marginBottom: "20px" }}>
+                <p style={{ fontWeight: "bold", fontSize: "14px", margin: 0, color: "green" }}>STATUS: FULLY APPROVED</p>
+            </div>
+        )}
 
-      <footer className="flex justify-between items-end pt-10 mt-10">
-        <div className="text-center">
-          <p className="mb-2 h-6">{approverGM ? "(Approved)" : "(__________________)"}</p>
-          <p className="font-bold">GM ( O )</p>
-        </div>
-        <div className="text-center">
-          <p className="mb-2 h-6">{approverDGM ? "(Approved)" : "(__________________)"}</p>
-          <p className="font-bold">DGM</p>
-        </div>
-        <div className="text-center">
-          <p className="mb-2 h-6">{approverSM ? "(Approved)" : "(__________________)"}</p>
-          <p className="font-bold">SM(IT)</p>
-        </div>
-      </footer>
+        <footer style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", paddingTop: "20px", borderTop: "1px solid black" }}>
+          <div style={{ textAlign: "center" }}>
+            <p style={{ margin: 0, height: "20px", borderBottom: "1px solid black", width: "120px", marginBottom:"5px" }}>{approverSM ? "(Approved)" : ""}</p>
+            <p style={{ fontWeight: "bold", margin: 0 }}>SM(IT)</p>
+          </div>
+          <div style={{ textAlign: "center" }}>
+            <p style={{ margin: 0, height: "20px", borderBottom: "1px solid black", width: "120px", marginBottom:"5px"  }}>{approverDGM ? "(Approved)" : ""}</p>
+            <p style={{ fontWeight: "bold", margin: 0 }}>DGM</p>
+          </div>
+          <div style={{ textAlign: "center" }}>
+            <p style={{ margin: 0, height: "20px", borderBottom: "1px solid black", width: "120px", marginBottom:"5px"  }}>{approverGM ? "(Approved)" : ""}</p>
+            <p style={{ fontWeight: "bold", margin: 0 }}>GM ( O )</p>
+          </div>
+        </footer>
+      </section>
     </div>
   );
 }
