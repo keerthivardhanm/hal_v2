@@ -19,6 +19,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
 
 const RenderTable = ({ requests, caption }: { requests: ApprovalRequest[]; caption: string }) => {
   if (requests.length === 0) {
@@ -59,6 +60,7 @@ export function AdminDashboard() {
   const [allRequests, setAllRequests] = useState<ApprovalRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { user: currentUser, loading: authLoading } = useAuth(); // Get currentUser and authLoading state
 
   useEffect(() => {
     setLoading(true);
@@ -84,19 +86,27 @@ export function AdminDashboard() {
     return () => unsubscribe();
   }, [toast]);
 
-  const newRequests = useMemo(() => allRequests.filter(req => req.status === "Pending"), [allRequests]);
+  const newRequests = useMemo(() => {
+    if (loading || authLoading || !currentUser) return []; // Wait for data and user
+    return allRequests.filter(req => 
+      req.status === "Pending" &&
+      (!req.approvals || !req.approvals.some(approval => approval.adminUid === currentUser.uid))
+    );
+  }, [allRequests, currentUser, loading, authLoading]);
+
   const approvedRequests = useMemo(() => allRequests.filter(req => 
     req.status === "Level 1 Approved" || 
     req.status === "Level 2 Approved" || 
     req.status === "Fully Approved"
   ), [allRequests]);
+
   const rejectedRequests = useMemo(() => allRequests.filter(req => req.status === "Rejected"), [allRequests]);
 
   const getTabCount = (count: number) => {
     return count > 0 ? <Badge variant="secondary" className="ml-2 px-1.5 py-0.5 text-xs">{count}</Badge> : null;
   };
 
-  if (loading) {
+  if (loading || authLoading) { // Check both loading states
     return (
       <div className="flex flex-1 items-center justify-center p-8">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -129,7 +139,7 @@ export function AdminDashboard() {
           </TabsList>
 
           <TabsContent value="new">
-            <RenderTable requests={newRequests} caption="A list of new approval requests pending action." />
+            <RenderTable requests={newRequests} caption="A list of new approval requests pending your action." />
           </TabsContent>
           <TabsContent value="approved">
             <RenderTable requests={approvedRequests} caption="A list of all approved requests." />
