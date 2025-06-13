@@ -19,13 +19,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ThumbsUp, ThumbsDown, Eye, CheckCircle2, Hourglass, XCircle, CalendarDays, User, Mail, FileText, Loader2, Building, Hash, Clock, List, Package, Printer } from "lucide-react";
 import { format } from "date-fns";
-import { useState, type ReactNode } from "react";
+import { useState, type ReactNode, useRef } from "react";
 import { doc, updateDoc, arrayUnion, Timestamp } from "firebase/firestore"; 
 import { db, auth } from "@/config/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { ApprovalLetter } from "@/components/print/ApprovalLetter";
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 interface RequestRowProps {
   request: ApprovalRequest;
@@ -78,10 +80,12 @@ const StatusInfo = ({ status }: { status: ApprovalRequest["status"] }) => {
 
 export function RequestRow({ request }: RequestRowProps) {
   const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmittingApproval, setIsSubmittingApproval] = useState(false); // Renamed for clarity
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
   const [showLetterPreviewDialog, setShowLetterPreviewDialog] = useState(false);
+  const printableRef = useRef<HTMLDivElement>(null);
 
   const currentUser = auth.currentUser;
 
@@ -99,7 +103,7 @@ export function RequestRow({ request }: RequestRowProps) {
         return;
     }
 
-    setIsSubmitting(true);
+    setIsSubmittingApproval(true);
     try {
       const requestRef = doc(db, "approval_requests", request.id);
       const newApprovalLevel = request.approvals.length + 1;
@@ -126,7 +130,7 @@ export function RequestRow({ request }: RequestRowProps) {
       console.error("Approval error:", error);
       toast({ variant: "destructive", title: "Approval Failed", description: error.message });
     } finally {
-      setIsSubmitting(false);
+      setIsSubmittingApproval(false);
     }
   };
 
@@ -143,7 +147,7 @@ export function RequestRow({ request }: RequestRowProps) {
         toast({ variant: "destructive", title: "Validation Error", description: "Rejection reason cannot be empty." });
         return;
     }
-    setIsSubmitting(true);
+    setIsSubmittingApproval(true); // Using the same state for rejection submission
     try {
       const requestRef = doc(db, "approval_requests", request.id);
       await updateDoc(requestRef, {
@@ -158,15 +162,65 @@ export function RequestRow({ request }: RequestRowProps) {
       console.error("Rejection error:", error);
       toast({ variant: "destructive", title: "Rejection Failed", description: error.message });
     } finally {
-      setIsSubmitting(false);
+      setIsSubmittingApproval(false);
     }
   };
 
-  const handleDownloadPdfFromPreview = () => {
-    setTimeout(() => {
-        window.print();
-    }, 250); 
+  const handleDownloadPdfFromPreview = async () => {
+    if (!printableRef.current) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Preview content not found. Cannot generate PDF.' });
+      return;
+    }
+    setIsDownloadingPdf(true);
+    try {
+      const canvas = await html2canvas(printableRef.current, {
+        scale: 2,
+        scrollY: -window.scrollY,
+        backgroundColor: "#fff",
+        useCORS: true,
+        logging: false,
+      });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'px',
+        format: [794, 1123] // A4 size in pixels at 96 DPI for width, and a common A4 height
+      });
+
+      const canvasAspectRatio = canvas.width / canvas.height;
+      const pageWidth = 794;
+      const pageHeight = 1123;
+      const pageAspectRatio = pageWidth / pageHeight;
+
+      let pdfCanvasWidth = canvas.width;
+      let pdfCanvasHeight = canvas.height;
+
+      if (canvasAspectRatio > pageAspectRatio) {
+        pdfCanvasWidth = pageWidth;
+        pdfCanvasHeight = pageWidth / canvasAspectRatio;
+      } else {
+        pdfCanvasHeight = pageHeight;
+        pdfCanvasWidth = pageHeight * canvasAspectRatio;
+      }
+      
+      const xOffset = (pageWidth - pdfCanvasWidth) / 2;
+      const yOffset = (pageHeight - pdfCanvasHeight) / 2;
+      
+      pdf.addImage(imgData, 'PNG', xOffset, yOffset, pdfCanvasWidth, pdfCanvasHeight);
+      pdf.save(`ApprovalLetter-${request.id.substring(0,8)}.pdf`);
+      toast({ title: 'PDF Downloaded', description: 'Approval letter has been downloaded successfully.' });
+    } catch (error: any) {
+      console.error("PDF Generation Error (Admin Row):", error);
+      toast({
+        variant: "destructive",
+        title: "PDF Generation Failed",
+        description: error.message || "An unexpected error occurred while generating the PDF.",
+      });
+    } finally {
+      setIsDownloadingPdf(false);
+    }
   };
+
 
   const canApprove = request.status !== "Fully Approved" && request.status !== "Rejected" && !request.approvals.find(appr => appr.adminUid === currentUser?.uid) && request.approvals.length < 3;
   const canReject = request.status !== "Fully Approved" && request.status !== "Rejected";
@@ -245,8 +299,8 @@ export function RequestRow({ request }: RequestRowProps) {
         </Dialog>
 
         {canApprove && (
-            <Button variant="ghost" size="icon" title="Approve" onClick={handleApprove} disabled={isSubmitting} className="transition-transform hover:scale-110">
-              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin text-green-500" /> : <ThumbsUp className="h-4 w-4 text-green-500" />}
+            <Button variant="ghost" size="icon" title="Approve" onClick={handleApprove} disabled={isSubmittingApproval} className="transition-transform hover:scale-110">
+              {isSubmittingApproval ? <Loader2 className="h-4 w-4 animate-spin text-green-500" /> : <ThumbsUp className="h-4 w-4 text-green-500" />}
             </Button>
         )}
 
@@ -282,8 +336,8 @@ export function RequestRow({ request }: RequestRowProps) {
                   <DialogClose asChild>
                     <Button type="button" variant="outline">Cancel</Button>
                   </DialogClose>
-                  <Button type="submit" variant="destructive" onClick={handleReject} disabled={isSubmitting}>
-                      {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  <Button type="submit" variant="destructive" onClick={handleReject} disabled={isSubmittingApproval}>
+                      {isSubmittingApproval ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                       Confirm Rejection
                   </Button>
                 </DialogFooter>
@@ -304,15 +358,16 @@ export function RequestRow({ request }: RequestRowProps) {
                     Review the letter below. Click "Download PDF" to print or save.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="printable-area p-6 max-h-[70vh] overflow-y-auto">
+                <div ref={printableRef} className="printable-area p-6 max-h-[70vh] overflow-y-auto">
                   <ApprovalLetter request={request} />
                 </div>
                 <DialogFooter className="p-6 pt-0">
                   <DialogClose asChild>
                     <Button variant="outline">Close</Button>
                   </DialogClose>
-                  <Button onClick={handleDownloadPdfFromPreview}>
-                    <Printer className="mr-2 h-4 w-4" /> Download PDF
+                  <Button onClick={handleDownloadPdfFromPreview} disabled={isDownloadingPdf}>
+                    {isDownloadingPdf ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Printer className="mr-2 h-4 w-4" />}
+                     Download PDF
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -322,3 +377,4 @@ export function RequestRow({ request }: RequestRowProps) {
     </TableRow>
   );
 }
+

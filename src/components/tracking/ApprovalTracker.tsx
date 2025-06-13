@@ -17,11 +17,13 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
-import { CheckCircle2, Hourglass, Printer, User, Mail, FileText, CalendarDays, XCircle, ThumbsUp, Users, Building, Hash, Clock, List, Package, Copy } from "lucide-react";
+import { CheckCircle2, Hourglass, Printer, User, Mail, FileText, CalendarDays, XCircle, ThumbsUp, Users, Building, Hash, Clock, List, Package, Copy, Loader2 } from "lucide-react";
 import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { ApprovalLetter } from "@/components/print/ApprovalLetter";
-import { useState, useEffect } from "react";
+import { useState, useRef } from "react";
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 interface ApprovalTrackerProps {
   request: ApprovalRequest;
@@ -70,6 +72,8 @@ const getStatusTextColor = (status: ApprovalRequest["status"]) => {
 export function ApprovalTracker({ request }: ApprovalTrackerProps) {
   const { toast } = useToast();
   const [showLetterPreviewDialog, setShowLetterPreviewDialog] = useState(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const printableContentRef = useRef<HTMLDivElement>(null);
 
   const handleCopyId = async () => {
     try {
@@ -88,12 +92,62 @@ export function ApprovalTracker({ request }: ApprovalTrackerProps) {
     }
   };
 
-  const handleDownloadPdfFromPreview = () => {
-    // The CSS in globals.css will handle showing only the .printable-area
-    // The .printable-area class is now permanently on the div in the dialog.
-     setTimeout(() => { // Ensure DOM updates from dialog opening are flushed
-        window.print();
-    }, 250);
+  const handleDownloadPdf = async () => {
+    if (!printableContentRef.current) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Preview content not found. Cannot generate PDF.' });
+      return;
+    }
+    setIsDownloadingPdf(true);
+    try {
+      const canvas = await html2canvas(printableContentRef.current, {
+        scale: 2,
+        scrollY: -window.scrollY,
+        backgroundColor: "#fff",
+        useCORS: true, 
+        logging: false,
+      });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'px',
+        format: [794, 1123] // A4 size in pixels at 96 DPI for width, and a common A4 height
+      });
+      // Calculate the aspect ratio of the canvas
+      const canvasAspectRatio = canvas.width / canvas.height;
+      // A4 page dimensions in px (assuming 96 DPI for pdf unit 'px')
+      const pageWidth = 794; 
+      const pageHeight = 1123; 
+      const pageAspectRatio = pageWidth / pageHeight;
+
+      let pdfCanvasWidth = canvas.width;
+      let pdfCanvasHeight = canvas.height;
+
+      // Adjust canvas size to fit within A4 dimensions while maintaining aspect ratio
+      if (canvasAspectRatio > pageAspectRatio) { // Canvas is wider than page
+        pdfCanvasWidth = pageWidth;
+        pdfCanvasHeight = pageWidth / canvasAspectRatio;
+      } else { // Canvas is taller than page (or same aspect ratio)
+        pdfCanvasHeight = pageHeight;
+        pdfCanvasWidth = pageHeight * canvasAspectRatio;
+      }
+      
+      // Center the image on the PDF page if it's smaller than the page
+      const xOffset = (pageWidth - pdfCanvasWidth) / 2;
+      const yOffset = (pageHeight - pdfCanvasHeight) / 2;
+
+      pdf.addImage(imgData, 'PNG', xOffset, yOffset, pdfCanvasWidth, pdfCanvasHeight);
+      pdf.save(`ApprovalLetter-${request.id.substring(0,8)}.pdf`);
+      toast({ title: 'PDF Downloaded', description: 'Approval letter has been downloaded successfully.' });
+    } catch (error: any) {
+      console.error("PDF Generation Error (Tracker):", error);
+      toast({
+        variant: "destructive",
+        title: "PDF Generation Failed",
+        description: error.message || "An unexpected error occurred while generating the PDF.",
+      });
+    } finally {
+      setIsDownloadingPdf(false);
+    }
   };
   
 
@@ -256,16 +310,16 @@ export function ApprovalTracker({ request }: ApprovalTrackerProps) {
                         Review the letter below. Click "Download PDF" to print or save.
                       </DialogDescription>
                     </DialogHeader>
-                     {/* The div below will be targeted by print CSS */}
-                    <div className="printable-area p-6 max-h-[70vh] overflow-y-auto">
+                    <div ref={printableContentRef} className="printable-area p-6 max-h-[70vh] overflow-y-auto">
                       <ApprovalLetter request={request} />
                     </div>
                     <DialogFooter className="p-6 pt-0">
                       <DialogClose asChild>
                         <Button variant="outline">Close</Button>
                       </DialogClose>
-                      <Button onClick={handleDownloadPdfFromPreview}>
-                        <Printer className="mr-2 h-4 w-4" /> Download PDF
+                      <Button onClick={handleDownloadPdf} disabled={isDownloadingPdf}>
+                        {isDownloadingPdf ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Printer className="mr-2 h-4 w-4" />}
+                        Download PDF
                       </Button>
                     </DialogFooter>
                   </DialogContent>
