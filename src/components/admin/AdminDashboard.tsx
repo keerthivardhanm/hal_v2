@@ -19,7 +19,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
-import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
+import { useAuth } from "@/contexts/AuthContext";
 
 const RenderTable = ({ requests, caption }: { requests: ApprovalRequest[]; caption: string }) => {
   if (requests.length === 0) {
@@ -60,7 +60,7 @@ export function AdminDashboard() {
   const [allRequests, setAllRequests] = useState<ApprovalRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const { user: currentUser, loading: authLoading } = useAuth(); // Get currentUser and authLoading state
+  const { user: currentUser, loading: authLoading } = useAuth();
 
   useEffect(() => {
     setLoading(true);
@@ -87,11 +87,16 @@ export function AdminDashboard() {
   }, [toast]);
 
   const newRequests = useMemo(() => {
-    if (loading || authLoading || !currentUser) return []; // Wait for data and user
-    return allRequests.filter(req => 
-      req.status === "Pending" &&
-      (!req.approvals || !req.approvals.some(approval => approval.adminUid === currentUser.uid))
-    );
+    if (loading || authLoading || !currentUser) return [];
+    return allRequests.filter(req => {
+      const alreadyApprovedByCurrentUser = req.approvals && req.approvals.some(approval => approval.adminUid === currentUser.uid);
+      const isFinalStatus = req.status === "Fully Approved" || req.status === "Rejected";
+      
+      // A request is "new" for the current admin if:
+      // 1. They haven't approved it yet.
+      // 2. The request is not in a terminal state (Fully Approved or Rejected).
+      return !alreadyApprovedByCurrentUser && !isFinalStatus;
+    });
   }, [allRequests, currentUser, loading, authLoading]);
 
   const approvedRequests = useMemo(() => allRequests.filter(req => 
@@ -106,7 +111,7 @@ export function AdminDashboard() {
     return count > 0 ? <Badge variant="secondary" className="ml-2 px-1.5 py-0.5 text-xs">{count}</Badge> : null;
   };
 
-  if (loading || authLoading) { // Check both loading states
+  if (loading || authLoading) {
     return (
       <div className="flex flex-1 items-center justify-center p-8">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -139,7 +144,7 @@ export function AdminDashboard() {
           </TabsList>
 
           <TabsContent value="new">
-            <RenderTable requests={newRequests} caption="A list of new approval requests pending your action." />
+            <RenderTable requests={newRequests} caption="A list of new approval requests pending your action or further action by others." />
           </TabsContent>
           <TabsContent value="approved">
             <RenderTable requests={approvedRequests} caption="A list of all approved requests." />
